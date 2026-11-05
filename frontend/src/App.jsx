@@ -33,12 +33,15 @@ function App() {
 
   const [result, setResult] = useState(null);
   const [gapResult, setGapResult] = useState(null);
+  const [roadmapResult, setRoadmapResult] = useState(null);
 
   const [loading, setLoading] = useState(false);
   const [gapLoading, setGapLoading] = useState(false);
+  const [roadmapLoading, setRoadmapLoading] = useState(false);
 
   const [error, setError] = useState("");
   const [gapError, setGapError] = useState("");
+  const [roadmapError, setRoadmapError] = useState("");
 
   // Update skill levels
   const handleChange = (e) => {
@@ -51,6 +54,8 @@ function App() {
 
     setGapResult(null);
     setResult(null);
+    setRoadmapResult(null);
+    setRoadmapError("");
   };
 
   // Career prediction
@@ -123,6 +128,46 @@ function App() {
       setGapLoading(false);
     }
   };
+
+  
+  // Generate personalized learning roadmap
+  const handleRoadmapSubmit = async () => {
+    setRoadmapLoading(true);
+    setRoadmapError("");
+    setRoadmapResult(null);
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/learning-roadmap",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ...skills,
+            target_career: targetCareer,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        throw new Error("Learning roadmap generation failed.");
+      }
+
+      const data = await response.json();
+      setRoadmapResult(data);
+
+    } catch (err) {
+      console.error(err);
+      setRoadmapError(
+        "Could not connect to the learning roadmap API."
+      );
+    } finally {
+      setRoadmapLoading(false);
+    }
+  };
+
 
   return (
     <div className="app">
@@ -254,6 +299,8 @@ function App() {
               onChange={(e) => {
                 setTargetCareer(e.target.value);
                 setGapResult(null);
+                setRoadmapResult(null);
+                setRoadmapError("");
               }}
             >
               {careerOptions.map((career) => (
@@ -355,6 +402,92 @@ function App() {
           )}
 
         </section>
+
+        
+        {/* Personalized Learning Roadmap */}
+
+        <section className="skill-form">
+
+          <h2>Personalized Learning Roadmap</h2>
+
+          <p>
+            Generate a week-by-week learning plan based on
+            your current skills and target career.
+          </p>
+
+          <button
+            type="button"
+            onClick={handleRoadmapSubmit}
+            disabled={roadmapLoading}
+          >
+            {roadmapLoading
+              ? "Generating Roadmap..."
+              : "Generate Learning Roadmap"}
+          </button>
+
+          {roadmapError && (
+            <div className="error">{roadmapError}</div>
+          )}
+
+          {roadmapResult && (
+            <div className="roadmap-result">
+
+              <h3>{roadmapResult.target_career}</h3>
+
+              <div className="roadmap-summary">
+                <strong>
+                  {roadmapResult.total_weeks} Weeks
+                </strong>
+                <span>Total Learning Duration</span>
+              </div>
+
+              <p>
+                Skill Requirement Coverage:{" "}
+                <strong>{roadmapResult.coverage_score}%</strong>
+              </p>
+
+              <h3>Your Weekly Plan</h3>
+
+              {roadmapResult.roadmap.map((item, index) => (
+                <div
+                  className="roadmap-week"
+                  key={`${item.week}-${item.skill}-${index}`}
+                >
+
+                  <div className="roadmap-week-heading">
+                    <span>Week {item.week}</span>
+                    <strong>
+                      {item.skill.replace("_", " ")}
+                    </strong>
+                  </div>
+
+                  <h4>Topics to Learn</h4>
+
+                  <ul>
+                    {item.topics.map((topic, topicIndex) => (
+                      <li key={topicIndex}>{topic}</li>
+                    ))}
+                  </ul>
+
+                  <div className="roadmap-task">
+                    <strong>Practical Task:</strong>
+                    <p>{item.task}</p>
+                  </div>
+
+                </div>
+              ))}
+
+              <p className="disclaimer">
+                This roadmap is generated using rule-based
+                scheduling. Learning duration is an estimate
+                and can vary with your pace.
+              </p>
+
+            </div>
+          )}
+
+        </section>
+
 
       </main>
 
