@@ -34,6 +34,7 @@ function App() {
   const [result, setResult] = useState(null);
   const [gapResult, setGapResult] = useState(null);
   const [roadmapResult, setRoadmapResult] = useState(null);
+  const [completedWeeks, setCompletedWeeks] = useState({});
 
   const [loading, setLoading] = useState(false);
   const [gapLoading, setGapLoading] = useState(false);
@@ -42,6 +43,15 @@ function App() {
   const [error, setError] = useState("");
   const [gapError, setGapError] = useState("");
   const [roadmapError, setRoadmapError] = useState("");
+
+  const totalWeeks = roadmapResult?.roadmap?.length || 0;
+
+  const completedCount = Object.values(completedWeeks)
+    .filter(Boolean).length;
+
+  const progressPercentage = totalWeeks > 0
+    ? Math.round((completedCount / totalWeeks) * 100)
+    : 0;
 
   // Update skill levels
   const handleChange = (e) => {
@@ -156,7 +166,9 @@ function App() {
       }
 
       const data = await response.json();
+
       setRoadmapResult(data);
+      setCompletedWeeks({});
 
     } catch (err) {
       console.error(err);
@@ -166,6 +178,14 @@ function App() {
     } finally {
       setRoadmapLoading(false);
     }
+  };
+
+
+  const handleWeekToggle = (week) => {
+    setCompletedWeeks((previous) => ({
+      ...previous,
+      [week]: !previous[week],
+    }));
   };
 
 
@@ -448,6 +468,27 @@ function App() {
 
               <h3>Your Weekly Plan</h3>
 
+              <div className="progress-section">
+
+                <div className="progress-heading">
+                  <strong>Overall Learning Progress</strong>
+
+                  <strong>{progressPercentage}%</strong>
+                </div>
+
+                <div className="score-track">
+                  <div
+                    className="score-fill"
+                    style={{ width: `${progressPercentage}%` }}
+                  />
+                </div>
+
+                <p>
+                  {completedCount} of {totalWeeks} weeks completed
+                </p>
+
+              </div>
+
               {roadmapResult.roadmap.map((item, index) => (
                 <div
                   className="roadmap-week"
@@ -458,6 +499,17 @@ function App() {
                     <span>Week {item.week}</span>
                     <strong>
                       {item.skill.replace("_", " ")}
+                      <label className="week-checkbox">
+
+                        <input
+                          type="checkbox"
+                          checked={Boolean(completedWeeks[item.week])}
+                          onChange={() => handleWeekToggle(item.week)}
+                        />
+
+                            Completed
+
+                      </label>
                     </strong>
                   </div>
 
