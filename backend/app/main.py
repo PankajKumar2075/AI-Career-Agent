@@ -8,6 +8,7 @@ from fastapi import FastAPI
 from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Literal
+from backend.app.services.roadmap_service import generate_learning_roadmap
 
 
 # 1. Create FastAPI application
@@ -218,3 +219,24 @@ def analyze_skill_gap(student: SkillGapRequest):
         "skill_gaps": skill_gaps,
         "coverage_score": round(coverage, 2)
     }
+
+
+
+@app.post("/learning-roadmap")
+def create_learning_roadmap(student: SkillGapRequest):
+
+    # First, calculate the student's skill gaps
+    gap_result = analyze_skill_gap(student)
+
+    # Generate a roadmap using the calculated skill gaps
+    roadmap_result = generate_learning_roadmap(
+        gap_result["skill_gaps"]
+    )
+
+    return {
+        "target_career": student.target_career,
+        "coverage_score": gap_result["coverage_score"],
+        "total_weeks": roadmap_result["total_weeks"],
+        "roadmap": roadmap_result["roadmap"]
+    }
+
