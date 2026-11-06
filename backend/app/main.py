@@ -9,6 +9,12 @@ from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Literal
 from backend.app.services.roadmap_service import generate_learning_roadmap
+from backend.app.services.progress_service import (
+    save_learning_progress,
+    get_learning_progress
+)
+
+
 
 
 # 1. Create FastAPI application
@@ -69,7 +75,14 @@ class SkillGapRequest(StudentSkills):
         "Full Stack Developer"
     ]
 
-
+class LearningProgressRequest(BaseModel):
+    student_id: str = Field(min_length=1, max_length=100)
+    target_career: Literal[
+        "ML Engineer",
+        "Data Analyst",
+        "Full Stack Developer"
+    ]
+    completed_weeks: list[int] = Field(default_factory=list)
 
 # Initial illustrative skill benchmarks for each career
 
@@ -240,3 +253,32 @@ def create_learning_roadmap(student: SkillGapRequest):
         "roadmap": roadmap_result["roadmap"]
     }
 
+
+
+@app.post("/save-progress")
+def save_progress(request: LearningProgressRequest):
+
+    result = save_learning_progress(
+        request.student_id,
+        request.target_career,
+        request.completed_weeks
+    )
+
+    return result
+
+
+
+@app.get("/get-progress/{student_id}/{target_career}")
+def retrieve_progress(student_id: str, target_career: str):
+
+    if target_career not in CAREER_REQUIREMENTS:
+        return {
+            "error": "Invalid target career"
+        }
+
+    result = get_learning_progress(
+        student_id,
+        target_career
+    )
+
+    return result

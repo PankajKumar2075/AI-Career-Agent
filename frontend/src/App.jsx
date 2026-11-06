@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import "./App.css";
 
 const skillNames = [
@@ -19,6 +19,8 @@ const careerOptions = [
 ];
 
 function App() {
+  const studentId = "student_001";
+
   const [skills, setSkills] = useState({
     Python: 5,
     SQL: 5,
@@ -52,6 +54,11 @@ function App() {
   const progressPercentage = totalWeeks > 0
     ? Math.round((completedCount / totalWeeks) * 100)
     : 0;
+
+
+    useEffect(() => {
+      loadSavedProgress();
+    }, [targetCareer]);
 
   // Update skill levels
   const handleChange = (e) => {
@@ -168,7 +175,7 @@ function App() {
       const data = await response.json();
 
       setRoadmapResult(data);
-      setCompletedWeeks({});
+      await loadSavedProgress();
 
     } catch (err) {
       console.error(err);
@@ -182,11 +189,78 @@ function App() {
 
 
   const handleWeekToggle = (week) => {
-    setCompletedWeeks((previous) => ({
+  setCompletedWeeks((previous) => {
+    const updated = {
       ...previous,
       [week]: !previous[week],
-    }));
-  };
+    };
+
+    saveProgressToDatabase(updated);
+
+    return updated;
+  });
+};
+
+
+  
+const loadSavedProgress = async () => {
+  try {
+    const response = await fetch(
+      `http://127.0.0.1:8000/get-progress/${studentId}/${encodeURIComponent(targetCareer)}`
+    );
+
+    if (!response.ok) {
+      throw new Error("Could not retrieve progress");
+    }
+
+    const data = await response.json();
+
+    const savedWeeks = {};
+
+    data.completed_weeks.forEach((week) => {
+      savedWeeks[week] = true;
+    });
+
+    setCompletedWeeks(savedWeeks);
+
+  } catch (err) {
+    console.error("Progress loading error:", err);
+  }
+};
+
+
+
+const saveProgressToDatabase = async (updatedWeeks) => {
+  try {
+    const completed = Object.keys(updatedWeeks)
+      .filter((week) => updatedWeeks[week])
+      .map(Number);
+
+    const response = await fetch(
+      "http://127.0.0.1:8000/save-progress",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          student_id: studentId,
+          target_career: targetCareer,
+          completed_weeks: completed,
+        }),
+      }
+    );
+
+    if (!response.ok) {
+      throw new Error("Could not save progress");
+    }
+
+    console.log("Progress saved successfully!");
+
+  } catch (err) {
+    console.error("Progress saving error:", err);
+  }
+};
 
 
   return (
