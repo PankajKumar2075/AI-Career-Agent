@@ -474,3 +474,47 @@
     margin: 8px 0 0;
     line-height: 1.5;
 }
+
+
+.rag-section {
+    margin-top: 30px;
+    padding: 25px;
+    border-radius: 12px;
+    background: #f8fafc;
+}
+
+.rag-section textarea {
+    width: 100%;
+    padding: 12px;
+    margin: 15px 0;
+    border-radius: 8px;
+    border: 1px solid #cbd5e1;
+    resize: vertical;
+    box-sizing: border-box;
+}
+
+.rag-section button {
+    padding: 12px 20px;
+    border: none;
+    border-radius: 8px;
+    background: #2563eb;
+    color: white;
+    cursor: pointer;
+}
+
+.rag-section button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.rag-answer {
+    margin-top: 20px;
+    padding: 18px;
+    background: white;
+    border-radius: 10px;
+    white-space: pre-wrap;
+}
+
+.rag-answer p {
+    line-height: 1.6;
+}

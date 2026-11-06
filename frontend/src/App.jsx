@@ -61,6 +61,12 @@ function App() {
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState("");
 
+
+  const [ragQuestion, setRagQuestion] = useState("");
+  const [ragAnswer, setRagAnswer] = useState("");
+  const [ragLoading, setRagLoading] = useState(false);
+  const [ragError, setRagError] = useState("");
+
   
 
     useEffect(() => {
@@ -154,8 +160,8 @@ function App() {
   };
 
   
-  // Generate personalized learning roadmap
-  const handleRoadmapSubmit = async () => {
+// Generate personalized learning roadmap
+const handleRoadmapSubmit = async () => {
     setRoadmapLoading(true);
     setRoadmapError("");
     setRoadmapResult(null);
@@ -195,7 +201,7 @@ function App() {
   };
 
 
-  const handleWeekToggle = (week) => {
+const handleWeekToggle = (week) => {
   setCompletedWeeks((previous) => {
     const updated = {
       ...previous,
@@ -322,6 +328,47 @@ const handleAIAdvice = async () => {
         setAiError(error.message);
     } finally {
         setAiLoading(false);
+    }
+};
+
+const handleRAGAdvice = async () => {
+    if (!ragQuestion.trim()) {
+        setRagError("Please enter a question.");
+        return;
+    }
+
+    setRagLoading(true);
+    setRagError("");
+    setRagAnswer("");
+
+    try {
+        const response = await fetch(
+            "http://127.0.0.1:8000/rag-career-advice",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    question: ragQuestion.trim()
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.detail || "RAG request failed"
+            );
+        }
+
+        setRagAnswer(data.ai_response);
+
+    } catch (error) {
+        setRagError(error.message);
+    } finally {
+        setRagLoading(false);
     }
 };
 
@@ -722,6 +769,42 @@ const handleAIAdvice = async () => {
                     <p>AI is thinking...</p>
                 )}
             </div>
+        </section>
+
+
+        <section className="rag-section">
+            <h2>RAG Career Knowledge Assistant</h2>
+
+            <p>
+                Ask questions about machine learning,
+                programming, career roadmaps and projects.
+                Get answers using our career knowledge base.
+            </p>
+
+            <textarea
+                placeholder="Ask a question using career knowledge..."
+                value={ragQuestion}
+                onChange={(e) => setRagQuestion(e.target.value)}
+                rows="4"
+            />
+
+            <button
+                onClick={handleRAGAdvice}
+                disabled={ragLoading}
+            >
+                {ragLoading ? "Searching Knowledge Base..." : "Ask RAG Assistant"}
+            </button>
+
+            {ragError && (
+                <p className="error-message">{ragError}</p>
+            )}
+
+            {ragAnswer && (
+                <div className="rag-answer">
+                    <h3>RAG Response</h3>
+                    <p>{ragAnswer}</p>
+                </div>
+            )}
         </section>
 
       </main>

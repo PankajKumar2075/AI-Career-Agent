@@ -18,6 +18,7 @@ from generative_ai.ollama_service import (
     generate_chat_response
 )
 from fastapi import HTTPException
+from generative_ai.rag.rag_pipeline import generate_rag_response
 
 
 
@@ -108,6 +109,10 @@ class CareerChatRequest(StudentSkills):
         min_length=1,
         max_length=10
     )
+
+class RAGQuestion(BaseModel):
+    question: str = Field(min_length=1, max_length=2000)
+
 
 # Initial illustrative skill benchmarks for each career
 
@@ -491,4 +496,22 @@ def personalized_ai_chat(request: CareerChatRequest):
         raise HTTPException(
             status_code=503,
             detail=f"AI service unavailable: {str(e)}"
+        )
+
+
+@app.post("/rag-career-advice")
+def rag_career_advice(request: RAGQuestion):
+
+    try:
+        answer = generate_rag_response(request.question)
+
+        return {
+            "question": request.question,
+            "ai_response": answer
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"RAG service unavailable: {str(e)}"
         )
