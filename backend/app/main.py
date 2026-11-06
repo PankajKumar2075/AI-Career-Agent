@@ -13,7 +13,10 @@ from backend.app.services.progress_service import (
     save_learning_progress,
     get_learning_progress
 )
-from generative_ai.ollama_service import generate_ai_response
+from generative_ai.ollama_service import (
+    generate_ai_response,
+    generate_chat_response
+)
 from fastapi import HTTPException
 
 
@@ -93,6 +96,18 @@ class AIAdviceRequest(BaseModel):
 
 class PersonalizedAIRequest(StudentSkills):
     question: str = Field(min_length=5, max_length=2000)
+
+
+class ChatMessage(BaseModel):
+    role: Literal["user", "assistant"]
+    content: str = Field(min_length=1, max_length=5000)
+
+
+class CareerChatRequest(StudentSkills):
+    messages: list[ChatMessage] = Field(
+        min_length=1,
+        max_length=10
+    )
 
 # Initial illustrative skill benchmarks for each career
 
@@ -388,6 +403,87 @@ def personalized_ai_advice(request: PersonalizedAIRequest):
             "student_skills": current_skills,
             "skill_gaps": skill_gaps,
             "question": request.question,
+            "ai_response": answer
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"AI service unavailable: {str(e)}"
+        )
+
+
+@app.post("/personalized-ai-chat")
+def personalized_ai_chat(request: CareerChatRequest):
+
+    # Get student skills
+    current_skills = request.model_dump(
+        exclude={"messages"}
+    )
+
+    # Predict career
+    student_data = pd.DataFrame([current_skills])
+    prediction = str(model.predict(student_data)[0])
+
+    # Calculate skill gaps
+    required_skills = CAREER_REQUIREMENTS[prediction]
+
+    skill_gaps = {}
+
+    for skill, required in required_skills.items():
+
+        current = current_skills[skill]
+        gap = max(0, required - current)
+
+        if gap > 0:
+            skill_gaps[skill] = {
+                "current": current,
+                "required": required,
+                "gap": gap
+            }
+
+    # Create system instructions
+    system_prompt = f"""
+    You are an expert AI career mentor.
+
+    STUDENT SKILLS:
+    {current_skills}
+
+    PREDICTED CAREER:
+    {prediction}
+
+    STUDENT SKILL GAPS:
+    {skill_gaps}
+
+    Instructions:
+    1. Remember the conversation history.
+    2. Give personalized career guidance.
+    3. Use the student's actual skill levels.
+    4. Explain concepts in beginner-friendly language.
+    5. Suggest practical projects when relevant.
+    6. Do not invent student achievements.
+    """
+
+    # Prepare conversation
+    messages = [
+        {
+            "role": "system",
+            "content": system_prompt
+        }
+    ]
+
+    for message in request.messages:
+        messages.append({
+            "role": message.role,
+            "content": message.content
+        })
+
+    try:
+        answer = generate_chat_response(messages)
+
+        return {
+            "recommended_career": prediction,
+            "skill_gaps": skill_gaps,
             "ai_response": answer
         }
 

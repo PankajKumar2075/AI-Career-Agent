@@ -30,3 +30,28 @@ def generate_ai_response(prompt):
 
     except requests.exceptions.RequestException as e:
         raise Exception(f"Ollama connection error: {e}")
+
+
+def generate_chat_response(messages):
+
+    data = {
+        "model": "qwen2.5:3b",
+        "messages": messages,
+        "stream": False
+    }
+
+    try:
+        response = requests.post(
+            OLLAMA_URL,
+            json=data,
+            timeout=120
+        )
+
+        response.raise_for_status()
+
+        result = response.json()
+
+        return result["message"]["content"]
+
+    except requests.exceptions.RequestException as e:
+        raise Exception(f"Ollama connection error: {e}")

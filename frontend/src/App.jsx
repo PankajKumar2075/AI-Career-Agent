@@ -57,9 +57,11 @@ function App() {
 
 
   const [question, setQuestion] = useState("");
-  const [aiAnswer, setAiAnswer] = useState("");
+  const [chatMessages, setChatMessages] = useState([]);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState("");
+
+  
 
     useEffect(() => {
       loadSavedProgress();
@@ -269,43 +271,59 @@ const saveProgressToDatabase = async (updatedWeeks) => {
 
 
 const handleAIAdvice = async () => {
-  if (!question.trim()) {
-    setAiError("Please enter a question.");
-    return;
-  }
-
-  setAiLoading(true);
-  setAiError("");
-  setAiAnswer("");
-
-  try {
-    const response = await fetch(
-      "http://127.0.0.1:8000/ai-career-advice",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          question: question,
-        }),
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.detail || "AI request failed");
+    if (!question.trim()) {
+        setAiError("Please enter a question.");
+        return;
     }
 
-    setAiAnswer(data.ai_response);
-  } catch (error) {
-    setAiError(error.message);
-  } finally {
-    setAiLoading(false);
-  }
-};
+    const updatedMessages = [
+        ...chatMessages,
+        {
+            role: "user",
+            content: question.trim()
+        }
+    ].slice(-10);
 
+    setChatMessages(updatedMessages);
+    setQuestion("");
+    setAiLoading(true);
+    setAiError("");
+
+    try {
+        const response = await fetch(
+            "http://127.0.0.1:8000/personalized-ai-chat",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    ...skills,
+                    messages: updatedMessages
+                })
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || "AI request failed");
+        }
+
+        setChatMessages(prev => [
+            ...prev,
+            {
+                role: "assistant",
+                content: data.ai_response
+            }
+        ].slice(-10));
+
+    } catch (error) {
+        setAiError(error.message);
+    } finally {
+        setAiLoading(false);
+    }
+};
 
   return (
     <div className="app">
@@ -662,36 +680,49 @@ const handleAIAdvice = async () => {
           <h2>AI Career Assistant</h2>
 
           <p>
-            Ask questions about your career, skills,
-            learning path and interview preparation.
+              Ask questions about your career, skills,
+              learning path and interview preparation.
           </p>
 
           <textarea
-            placeholder="Ask your career-related question..."
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            rows="4"
+              placeholder="Ask your career-related question..."
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              rows="4"
           />
 
           <button
-            onClick={handleAIAdvice}
-            disabled={aiLoading}
+              onClick={handleAIAdvice}
+              disabled={aiLoading}
           >
-            {aiLoading ? "Generating..." : "Ask AI"}
+              {aiLoading ? "Generating..." : "Ask AI"}
           </button>
 
-          {aiError && (
-            <p className="error-message">{aiError}</p>
-          )}
+            {aiError && (
+                <p className="error-message">{aiError}</p>
+            )}
 
-          {aiAnswer && (
-            <div className="ai-answer">
-              <h3>AI Response</h3>
-              <p>{aiAnswer}</p>
+            <div className="chat-messages">
+                {chatMessages.map((message, index) => (
+                    <div
+                        key={index}
+                        className={`chat-message ${message.role}`}
+                    >
+                        <strong>
+                            {message.role === "user"
+                                ? "You"
+                                : "AI Career Assistant"}
+                        </strong>
+
+                        <p>{message.content}</p>
+                    </div>
+                ))}
+
+                {aiLoading && (
+                    <p>AI is thinking...</p>
+                )}
             </div>
-          )}
         </section>
-
 
       </main>
 
