@@ -56,6 +56,11 @@ function App() {
     : 0;
 
 
+  const [question, setQuestion] = useState("");
+  const [aiAnswer, setAiAnswer] = useState("");
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState("");
+
     useEffect(() => {
       loadSavedProgress();
     }, [targetCareer]);
@@ -259,6 +264,45 @@ const saveProgressToDatabase = async (updatedWeeks) => {
 
   } catch (err) {
     console.error("Progress saving error:", err);
+  }
+};
+
+
+const handleAIAdvice = async () => {
+  if (!question.trim()) {
+    setAiError("Please enter a question.");
+    return;
+  }
+
+  setAiLoading(true);
+  setAiError("");
+  setAiAnswer("");
+
+  try {
+    const response = await fetch(
+      "http://127.0.0.1:8000/ai-career-advice",
+      {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          question: question,
+        }),
+      }
+    );
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.detail || "AI request failed");
+    }
+
+    setAiAnswer(data.ai_response);
+  } catch (error) {
+    setAiError(error.message);
+  } finally {
+    setAiLoading(false);
   }
 };
 
@@ -612,6 +656,40 @@ const saveProgressToDatabase = async (updatedWeeks) => {
             </div>
           )}
 
+        </section>
+
+        <section className="ai-section">
+          <h2>AI Career Assistant</h2>
+
+          <p>
+            Ask questions about your career, skills,
+            learning path and interview preparation.
+          </p>
+
+          <textarea
+            placeholder="Ask your career-related question..."
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            rows="4"
+          />
+
+          <button
+            onClick={handleAIAdvice}
+            disabled={aiLoading}
+          >
+            {aiLoading ? "Generating..." : "Ask AI"}
+          </button>
+
+          {aiError && (
+            <p className="error-message">{aiError}</p>
+          )}
+
+          {aiAnswer && (
+            <div className="ai-answer">
+              <h3>AI Response</h3>
+              <p>{aiAnswer}</p>
+            </div>
+          )}
         </section>
 
 

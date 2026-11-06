@@ -13,6 +13,9 @@ from backend.app.services.progress_service import (
     save_learning_progress,
     get_learning_progress
 )
+from generative_ai.ollama_service import generate_ai_response
+from fastapi import HTTPException
+
 
 
 
@@ -83,6 +86,13 @@ class LearningProgressRequest(BaseModel):
         "Full Stack Developer"
     ]
     completed_weeks: list[int] = Field(default_factory=list)
+
+class AIAdviceRequest(BaseModel):
+    question: str = Field(min_length=5, max_length=2000)
+
+
+class PersonalizedAIRequest(StudentSkills):
+    question: str = Field(min_length=5, max_length=2000)
 
 # Initial illustrative skill benchmarks for each career
 
@@ -282,3 +292,107 @@ def retrieve_progress(student_id: str, target_career: str):
     )
 
     return result
+
+
+@app.post("/ai-career-advice")
+def ai_career_advice(request: AIAdviceRequest):
+
+    prompt = f"""
+    You are an expert AI career mentor.
+
+    Give clear, practical and beginner-friendly
+    career guidance to students.
+
+    Student's question:
+    {request.question}
+
+    Provide a structured and useful answer.
+    """
+
+    try:
+        answer = generate_ai_response(prompt)
+
+        return {
+            "question": request.question,
+            "ai_response": answer
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"AI service unavailable: {str(e)}"
+        )
+
+@app.post("/personalized-ai-advice")
+def personalized_ai_advice(request: PersonalizedAIRequest):
+
+    # Get student skills
+    student_data = pd.DataFrame([
+        request.model_dump(exclude={"question"})
+    ])
+
+    # Predict career using our trained ML model
+    prediction = model.predict(student_data)[0]
+
+    # Calculate skill gaps
+    required_skills = CAREER_REQUIREMENTS[str(prediction)]
+
+    current_skills = request.model_dump(
+        exclude={"question"}
+    )
+
+    skill_gaps = {}
+
+    for skill, required in required_skills.items():
+
+        current = current_skills[skill]
+        gap = max(0, required - current)
+
+        if gap > 0:
+            skill_gaps[skill] = {
+                "current": current,
+                "required": required,
+                "gap": gap
+            }
+
+    # Prepare personalized prompt
+    prompt = f"""
+    You are an expert AI career mentor.
+
+    STUDENT SKILLS:
+    {current_skills}
+
+    ML MODEL PREDICTED CAREER:
+    {prediction}
+
+    IDENTIFIED SKILL GAPS:
+    {skill_gaps}
+
+    STUDENT QUESTION:
+    {request.question}
+
+    Instructions:
+    1. Give advice based on the actual student skills.
+    2. Explain which skills need improvement.
+    3. Prioritize the most important skill gaps.
+    4. Suggest practical projects where relevant.
+    5. Give beginner-friendly explanations.
+    6. Do not invent student experience or achievements.
+    """
+
+    try:
+        answer = generate_ai_response(prompt)
+
+        return {
+            "recommended_career": str(prediction),
+            "student_skills": current_skills,
+            "skill_gaps": skill_gaps,
+            "question": request.question,
+            "ai_response": answer
+        }
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"AI service unavailable: {str(e)}"
+        )

@@ -399,3 +399,47 @@
   height: 16px;
   cursor: pointer;
 }
+
+
+.ai-section {
+  margin: 30px 0;
+  padding: 25px;
+  border-radius: 12px;
+  background: #f4f6fb;
+}
+
+.ai-section textarea {
+  width: 100%;
+  padding: 12px;
+  margin: 15px 0;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  resize: vertical;
+  font-size: 15px;
+}
+
+.ai-section button {
+  padding: 12px 24px;
+  background: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.ai-section button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ai-answer {
+  margin-top: 20px;
+  padding: 20px;
+  background: white;
+  border-radius: 8px;
+  white-space: pre-wrap;
+}
+
+.error-message {
+  color: #dc2626;
+}
