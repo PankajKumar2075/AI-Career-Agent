@@ -113,6 +113,8 @@ class CareerChatRequest(StudentSkills):
 class RAGQuestion(BaseModel):
     question: str = Field(min_length=1, max_length=2000)
 
+    category: str | None = None
+
 
 # Initial illustrative skill benchmarks for each career
 
@@ -501,12 +503,15 @@ def personalized_ai_chat(request: CareerChatRequest):
 
 @app.post("/rag-career-advice")
 def rag_career_advice(request: RAGQuestion):
-
     try:
-        answer = generate_rag_response(request.question)
+        answer = generate_rag_response(
+            request.question,
+            category=request.category
+        )
 
         return {
             "question": request.question,
+            "category": request.category,
             "ai_response": answer
         }
 

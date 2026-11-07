@@ -66,6 +66,7 @@ function App() {
   const [ragAnswer, setRagAnswer] = useState("");
   const [ragLoading, setRagLoading] = useState(false);
   const [ragError, setRagError] = useState("");
+  const [ragCategory, setRagCategory] = useState("");
 
   
 
@@ -350,7 +351,8 @@ const handleRAGAdvice = async () => {
                     "Content-Type": "application/json"
                 },
                 body: JSON.stringify({
-                    question: ragQuestion.trim()
+                    question: ragQuestion,
+                    category: ragCategory || null
                 })
             }
         );
@@ -780,6 +782,20 @@ const handleRAGAdvice = async () => {
                 programming, career roadmaps and projects.
                 Get answers using our career knowledge base.
             </p>
+
+            <label>Select Knowledge Category:</label>
+
+            <select
+                value={ragCategory}
+                onChange={(e) => setRagCategory(e.target.value)}
+            >
+                <option value="">All Categories</option>
+                <option value="Python">Python</option>
+                <option value="Machine Learning">Machine Learning</option>
+                <option value="Deep Learning">Deep Learning</option>
+                <option value="Full Stack">Full Stack</option>
+                <option value="Data Analytics">Data Analytics</option>
+            </select>
 
             <textarea
                 placeholder="Ask a question using career knowledge..."

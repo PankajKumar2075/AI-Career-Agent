@@ -1,95 +1,122 @@
+from pathlib import Path
 
+import chromadb
 from sentence_transformers import SentenceTransformer
-from sklearn.metrics.pairwise import cosine_similarity
 
 from generative_ai.ollama_service import generate_ai_response
 
 
-# Step 1: Load embedding model
+# Load embedding model
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
 
-# Step 2: Create our career knowledge base
-documents = [
-    "Python is an important programming language for Machine Learning. Learn variables, functions, OOP, NumPy and Pandas.",
+# Create persistent ChromaDB client
+DB_PATH = Path(__file__).resolve().parent / "chroma_db"
 
-    "Machine Learning Engineers should understand supervised learning, unsupervised learning, regression, classification, decision trees and SVM.",
-
-    "Deep Learning includes neural networks, CNN, RNN and frameworks such as PyTorch and TensorFlow.",
-
-    "A Machine Learning portfolio should include projects such as house price prediction, spam detection and customer churn prediction.",
-
-    "Full Stack Developers should learn HTML, CSS, JavaScript, React, Node.js, Express.js and MongoDB.",
-
-    "Data Analysts should learn SQL, Excel, Python, Pandas and data visualization."
-]
+client = chromadb.PersistentClient(
+    path=str(DB_PATH)
+)
 
 
-# Step 3: Generate document embeddings
-document_embeddings = model.encode(documents)
+# Access existing collection
+collection = client.get_or_create_collection(
+    name="career_knowledge",
+    metadata={"hnsw:space": "cosine"}
+)
 
 
-# Step 4: Retrieve relevant documents
-def retrieve_documents(query, top_k=3):
+# Retrieve relevant documents
+def retrieve_documents(query, top_k=3, category=None):
 
     query_embedding = model.encode([query])
 
-    similarity_scores = cosine_similarity(
-        query_embedding,
-        document_embeddings
-    )[0]
+    # Prepare search parameters
+    search_params = {
+        "query_embeddings": query_embedding.tolist(),
+        "n_results": min(top_k, collection.count())
+    }
 
-    results = sorted(
-        zip(documents, similarity_scores),
-        key=lambda x: x[1],
-        reverse=True
+    # Apply category filter if provided
+    if category:
+        search_params["where"] = {
+            "category": category
+        }
+
+    results = collection.query(**search_params)
+
+    return results["documents"][0]
+
+
+# Generate RAG response
+def generate_rag_response(query, category=None):
+
+    relevant_documents = retrieve_documents(
+        query,
+        top_k=3,
+        category=category
     )
 
-    return [document for document, score in results[:top_k]]
-
-
-# Step 5: Generate an answer using retrieved context
-def generate_rag_response(query):
-
-    relevant_documents = retrieve_documents(query)
+    if not relevant_documents:
+        return "No relevant documents found in this category."
 
     context = "\n".join(relevant_documents)
 
     prompt = f"""
-    You are an expert AI Career Mentor.
+You are an expert AI Career Mentor.
 
-    Answer the student's question using the
-    following retrieved career knowledge.
+Answer the student's question using the retrieved career knowledge.
 
-    RETRIEVED CONTEXT:
-    {context}
+RETRIEVED CONTEXT:
+{context}
 
-    STUDENT QUESTION:
-    {query}
+STUDENT QUESTION:
+{query}
 
-    INSTRUCTIONS:
-    1. Use the retrieved context to answer.
-    2. Explain concepts in beginner-friendly language.
-    3. Give practical suggestions where relevant.
-    4. Do not invent facts that are not supported
-       by the retrieved context.
-    5. If the context does not contain enough
-       information, clearly say so.
-    """
+INSTRUCTIONS:
+1. Use the retrieved context to answer.
+2. Explain concepts in beginner-friendly language.
+3. Give practical suggestions where relevant.
+4. Do not invent unsupported facts.
+5. If context is insufficient, clearly say so.
+"""
 
-    answer = generate_ai_response(prompt)
-
-    return answer
+    return generate_ai_response(prompt)
 
 
-# Step 6: Test our RAG pipeline
+# Test the RAG pipeline
 if __name__ == "__main__":
 
     question = input("Ask your career question: ")
 
-    print("\nGenerating RAG response...\n")
+    print("\nRetrieving relevant documents...\n")
+
+    documents = retrieve_documents(question)
+
+    print("Retrieved Documents:")
+
+    for document in documents:
+        print("-", document)
+
+    print("\nGenerating AI response...\n")
 
     answer = generate_rag_response(question)
 
     print("AI Career Assistant:")
+    print(answer)
+
+
+if __name__ == "__main__":
+
+    question = input("Ask your career question: ")
+
+    category = input(
+        "Enter category (Python, Machine Learning, Deep Learning, Full Stack, Data Analytics): "
+    )
+
+    answer = generate_rag_response(
+        question,
+        category=category
+    )
+
+    print("\nAI Career Assistant:")
     print(answer)
