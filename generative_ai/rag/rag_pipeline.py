@@ -1,5 +1,6 @@
 
 from pathlib import Path
+
 import chromadb
 from sentence_transformers import SentenceTransformer
 
@@ -9,11 +10,11 @@ from generative_ai.ollama_service import generate_ai_response
 # Load embedding model
 model = SentenceTransformer("all-MiniLM-L6-v2")
 
-
 # Connect to ChromaDB
-DB_PATH = Path(__file__).resolve().parent / "chroma_db"
+BASE_DIR = Path(__file__).resolve().parent
+CHROMA_PATH = BASE_DIR / "chroma_db"
 
-client = chromadb.PersistentClient(path=str(DB_PATH))
+client = chromadb.PersistentClient(path=str(CHROMA_PATH))
 
 collection = client.get_or_create_collection(
     name="career_knowledge",
@@ -21,80 +22,135 @@ collection = client.get_or_create_collection(
 )
 
 
-def retrieve_documents(query, top_k=3, category=None):
+def retrieve_documents(query, top_k=3, category=None, max_distance=0.65):
 
-    query_embedding = model.encode([query])
+    query_embedding = model.encode([query]).tolist()
 
-    search_params = {
-        "query_embeddings": query_embedding.tolist(),
-        "n_results": min(top_k, collection.count())
-    }
+    results = collection.query(
+        query_embeddings=query_embedding,
+        n_results=min(top_k, collection.count()),
+        where={"category": category} if category else None
+    )
 
-    if category:
-        search_params["where"] = {
-            "category": category
-        }
+    documents = []
 
-    results = collection.query(**search_params)
+    if not results["documents"] or not results["documents"][0]:
+        return documents
 
-    documents = results["documents"][0]
+    for doc, distance, metadata in zip(
+        results["documents"][0],
+        results["distances"][0],
+        results["metadatas"][0]
+    ):
+        if distance <= max_distance:
+            documents.append({
+                "content": doc,
+                "source": metadata.get("source", "Unknown"),
+                "category": metadata.get("category", "Unknown"),
+                "chunk_number": metadata.get("chunk_number"),
+                "distance": round(float(distance), 4)
+            })
 
     return documents
 
 
-def generate_rag_response(query, category=None):
+def generate_rag_result(query, category=None):
 
-    relevant_documents = retrieve_documents(
-        query,
-        top_k=3,
-        category=category
-    )
+    documents = retrieve_documents(query, category=category)
 
-    if not relevant_documents:
-        return "No relevant documents found."
+    if not documents:
+        return {
+            "answer": "I could not find sufficiently relevant information in the knowledge base. Try rephrasing your question.",
+            "sources": [],
+            "total_chunks_used": 0
+        }
 
-    context = "\n\n".join(relevant_documents)
+    context = "\n\n".join([
+        f"Source: {doc['source']}\n"
+        f"Category: {doc['category']}\n"
+        f"Content: {doc['content']}"
+        for doc in documents
+    ])
 
     prompt = f"""
-You are an expert AI Career Mentor.
+You are an AI Career Assistant.
 
-Answer the student's question using the retrieved knowledge.
+Answer the user's question using the provided knowledge base context.
 
-RETRIEVED CONTEXT:
+Rules:
+1. Give a clear and beginner-friendly answer.
+2. Prefer information from the provided context.
+3. Do not invent document names or claim that unsupported details came from the documents.
+4. If the context does not contain enough information, say so.
+5. Use practical examples when appropriate.
+
+KNOWLEDGE BASE CONTEXT:
 {context}
 
-STUDENT QUESTION:
+USER QUESTION:
 {query}
 
-INSTRUCTIONS:
-1. Use retrieved context to answer.
-2. Explain concepts in beginner-friendly language.
-3. Give practical examples where relevant.
-4. Do not invent unsupported facts.
-5. If context is insufficient, clearly mention it.
+ANSWER:
 """
 
     answer = generate_ai_response(prompt)
 
-    return answer
+    # Return answer and source information
+    return {
+        "answer": answer,
+        "sources": [
+            {
+                "source": doc["source"],
+                "category": doc["category"],
+                "chunk_number": doc["chunk_number"],
+                "distance": doc["distance"]
+            }
+            for doc in documents
+        ],
+        "total_chunks_used": len(documents)
+    }
+
+
+# Keep the old function for compatibility with existing backend code
+def generate_rag_response(query, category=None):
+    result = generate_rag_result(query, category)
+    return result["answer"]
+
+
+def inspect_retrieval(query, category=None):
+
+    documents = retrieve_documents(query, category=category)
+
+    print("\n===== RETRIEVED DOCUMENTS =====")
+
+    for doc in documents:
+        print("\nSource:", doc["source"])
+        print("Category:", doc["category"])
+        print("Distance:", doc["distance"])
+        print("Content:", doc["content"])
 
 
 if __name__ == "__main__":
 
-    question = input("Ask your career question: ")
+    print("===== SOURCE-AWARE RAG TEST =====")
 
-    category = input(
-        "Enter category (Python, Machine Learning, "
-        "Deep Learning, Full Stack, Data Analytics) "
-        "or press Enter for all: "
-    )
+    question = input("\nEnter your question: ")
+    category = input("Enter category (or press Enter for all): ").strip()
 
-    category = category.strip() or None
+    if not category:
+        category = None
 
-    answer = generate_rag_response(
-        question,
-        category=category
-    )
+    result = generate_rag_result(question, category)
 
-    print("\nAI Career Assistant:")
-    print(answer)
+    print("\n===== AI ANSWER =====")
+    print(result["answer"])
+
+    print("\n===== SOURCE DOCUMENTS =====")
+
+    for source in result["sources"]:
+        print("\nSource:", source["source"])
+        print("Category:", source["category"])
+        print("Chunk:", source["chunk_number"])
+        print("Distance:", source["distance"])
+
+    print("\nTotal chunks used:", result["total_chunks_used"])

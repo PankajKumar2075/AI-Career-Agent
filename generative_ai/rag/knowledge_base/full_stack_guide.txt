@@ -1,0 +1,32 @@
+FULL STACK DEVELOPMENT GUIDE
+
+Introduction:
+Full Stack Development involves building both frontend
+and backend parts of web applications.
+
+Frontend Development:
+Learn HTML, CSS, JavaScript and React.
+Understand responsive design, components, state management
+and API integration.
+
+Backend Development:
+Learn Node.js and Express.js.
+Understand REST APIs, authentication, authorization
+and server-side programming.
+
+Database:
+Learn MongoDB and MySQL.
+Understand CRUD operations, database design,
+relationships and indexing.
+
+Important Concepts:
+Learn HTTP, JSON, JWT authentication,
+Git, GitHub and deployment.
+
+Projects:
+Build a task manager, e-commerce application,
+learning management system and real-time chat application.
+
+Career Preparation:
+Build complete full-stack projects, understand
+software architecture and practice problem solving.

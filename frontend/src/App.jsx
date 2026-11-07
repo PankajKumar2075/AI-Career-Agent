@@ -67,7 +67,8 @@ function App() {
   const [ragLoading, setRagLoading] = useState(false);
   const [ragError, setRagError] = useState("");
   const [ragCategory, setRagCategory] = useState("");
-
+  const [ragSources, setRagSources] = useState([]);
+  const [ragTotalChunks, setRagTotalChunks] = useState(0);
   
 
     useEffect(() => {
@@ -332,6 +333,7 @@ const handleAIAdvice = async () => {
     }
 };
 
+
 const handleRAGAdvice = async () => {
     if (!ragQuestion.trim()) {
         setRagError("Please enter a question.");
@@ -341,6 +343,8 @@ const handleRAGAdvice = async () => {
     setRagLoading(true);
     setRagError("");
     setRagAnswer("");
+    setRagSources([]);
+    setRagTotalChunks(0);
 
     try {
         const response = await fetch(
@@ -360,12 +364,12 @@ const handleRAGAdvice = async () => {
         const data = await response.json();
 
         if (!response.ok) {
-            throw new Error(
-                data.detail || "RAG request failed"
-            );
+            throw new Error(data.detail || "RAG request failed");
         }
 
-        setRagAnswer(data.ai_response);
+        setRagAnswer(data.answer);
+        setRagSources(data.sources || []);
+        setRagTotalChunks(data.total_chunks_used || 0);
 
     } catch (error) {
         setRagError(error.message);
@@ -373,6 +377,7 @@ const handleRAGAdvice = async () => {
         setRagLoading(false);
     }
 };
+
 
   return (
     <div className="app">
@@ -795,6 +800,7 @@ const handleRAGAdvice = async () => {
                 <option value="Deep Learning">Deep Learning</option>
                 <option value="Full Stack">Full Stack</option>
                 <option value="Data Analytics">Data Analytics</option>
+                <option value="Interview Preparation">Interview Preparation</option>
             </select>
 
             <textarea
@@ -815,12 +821,55 @@ const handleRAGAdvice = async () => {
                 <p className="error-message">{ragError}</p>
             )}
 
+            
             {ragAnswer && (
                 <div className="rag-answer">
+
                     <h3>RAG Response</h3>
-                    <p>{ragAnswer}</p>
+
+                    <div className="rag-answer-content">
+                        <p style={{ whiteSpace: "pre-wrap" }}>
+                            {ragAnswer}
+                        </p>
+                    </div>
+
+                    <div className="rag-sources">
+
+                        <h3>Sources Used</h3>
+
+                        <p>
+                            Total retrieved chunks: <strong>{ragTotalChunks}</strong>
+                        </p>
+
+                        {ragSources.length > 0 ? (
+                            ragSources.map((source, index) => (
+                                <div className="rag-source-item" key={index}>
+
+                                    <h4>{source.source}</h4>
+
+                                    <p>
+                                        Category: {source.category}
+                                    </p>
+
+                                    <p>
+                                        Chunk: {source.chunk_number ?? "Not available"}
+                                    </p>
+
+                                    <p>
+                                        Retrieval distance: {source.distance}
+                                    </p>
+
+                                </div>
+                            ))
+                        ) : (
+                            <p>No relevant source documents were retrieved.</p>
+                        )}
+
+                    </div>
+
                 </div>
             )}
+
         </section>
 
       </main>

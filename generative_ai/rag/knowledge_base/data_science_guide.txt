@@ -1,0 +1,29 @@
+DATA SCIENCE CAREER GUIDE
+
+Introduction:
+Data Science combines statistics, programming and machine
+learning to extract useful insights from data.
+
+Important Skills:
+Learn Python, SQL, statistics, probability and data analysis.
+
+Data Analysis:
+Data analysis involves collecting, cleaning, transforming
+and exploring datasets to discover useful patterns.
+
+Important Libraries:
+NumPy is used for numerical operations.
+Pandas is used for data manipulation.
+Matplotlib and Seaborn are used for visualization.
+Scikit-learn provides machine learning algorithms.
+
+Machine Learning:
+Learn regression, classification, clustering and model evaluation.
+
+Projects:
+Build sales prediction, customer segmentation,
+student performance analysis and recommendation systems.
+
+Career Preparation:
+Develop practical projects, understand statistics,
+practice SQL and maintain a portfolio on GitHub.

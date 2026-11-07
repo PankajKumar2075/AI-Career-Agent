@@ -1,0 +1,28 @@
+PYTHON PROGRAMMING GUIDE
+
+Introduction:
+Python is a high-level programming language known for its
+simple syntax and readability. It is widely used in web
+development, automation, data science and artificial intelligence.
+
+Python Fundamentals:
+Learn variables, data types, operators, conditional statements,
+loops, functions and strings.
+
+Data Structures:
+Python provides lists, tuples, sets and dictionaries.
+These structures help organize and manipulate data.
+
+Object Oriented Programming:
+Learn classes, objects, inheritance, polymorphism,
+encapsulation and abstraction.
+
+Important Libraries:
+NumPy supports numerical computations.
+Pandas supports data manipulation and analysis.
+Matplotlib supports data visualization.
+Requests supports HTTP requests.
+
+Practice Projects:
+Build a calculator, contact management system,
+file organizer and simple web scraper.

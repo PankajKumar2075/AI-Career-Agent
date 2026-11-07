@@ -518,3 +518,41 @@
 .rag-answer p {
     line-height: 1.6;
 }
+
+
+.rag-answer {
+    margin-top: 25px;
+    padding: 20px;
+    border-radius: 12px;
+    background: #f4f7fb;
+    color: #222;
+}
+
+.rag-answer-content {
+    line-height: 1.7;
+    overflow-wrap: anywhere;
+}
+
+.rag-sources {
+    margin-top: 25px;
+    border-top: 1px solid #ccc;
+    padding-top: 15px;
+}
+
+.rag-source-item {
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 12px;
+}
+
+.rag-source-item h4 {
+    margin: 0 0 8px;
+    color: #2457a7;
+}
+
+.rag-source-item p {
+    margin: 5px 0;
+    font-size: 14px;
+}

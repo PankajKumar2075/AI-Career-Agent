@@ -1,15 +1,19 @@
 
 from pathlib import Path
-import chromadb
+
 from sentence_transformers import SentenceTransformer
 
 from generative_ai.rag.document_processor import (
-    load_document,
+    load_all_documents,
     split_into_chunks
 )
 
+import chromadb
+
+
 # Load embedding model
 model = SentenceTransformer("all-MiniLM-L6-v2")
+
 
 # Connect to persistent ChromaDB
 DB_PATH = Path(__file__).resolve().parent / "chroma_db"
@@ -21,48 +25,84 @@ collection = client.get_or_create_collection(
     metadata={"hnsw:space": "cosine"}
 )
 
-# Locate knowledge document
+
+# Document categories
+CATEGORY_MAP = {
+    "machine_learning.txt": "Machine Learning",
+    "python_guide.txt": "Python",
+    "data_science_guide.txt": "Data Analytics",
+    "full_stack_guide.txt": "Full Stack",
+    "interview_guide.txt": "Interview Preparation"
+}
+
+
+# Load all documents
 folder = Path(__file__).resolve().parent / "knowledge_base"
-file_path = folder / "machine_learning.txt"
 
-# Load and split document
-document = load_document(file_path)
+documents = load_all_documents(folder)
 
-chunks = split_into_chunks(
-    document,
-    chunk_size=500,
-    overlap=100
-)
+ids = []
+all_chunks = []
+metadatas = []
 
-print("Total chunks:", len(chunks))
 
-# Generate unique IDs
-ids = [
-    f"ml_guide_chunk_{i}"
-    for i in range(1, len(chunks) + 1)
-]
+# Process each document
+for document in documents:
+
+    file_name = document["file_name"]
+    content = document["content"]
+
+    chunks = split_into_chunks(content)
+
+    category = CATEGORY_MAP.get(file_name, "General")
+
+    for i, chunk in enumerate(chunks, start=1):
+
+        chunk_id = f"{Path(file_name).stem}_chunk_{i}"
+
+        ids.append(chunk_id)
+        all_chunks.append(chunk)
+
+        metadatas.append({
+            "source": file_name,
+            "category": category,
+            "chunk_number": i
+        })
+
 
 # Generate embeddings
-embeddings = model.encode(chunks)
+embeddings = model.encode(all_chunks)
 
-# Create metadata for every chunk
-metadatas = [
-    {
-        "category": "Machine Learning",
-        "source": "machine_learning.txt",
-        "chunk_number": i
-    }
-    for i in range(1, len(chunks) + 1)
-]
 
-# Store chunks in ChromaDB
+# Remove previous knowledge-base chunks before updating.
+# This prevents outdated chunks from remaining after reprocessing.
+existing = collection.get(
+    where={"source": {"$in": list(CATEGORY_MAP.keys())}},
+    include=["metadatas"]
+)
+
+if existing["ids"]:
+    collection.delete(ids=existing["ids"])
+
+
+# Store updated chunks
 collection.upsert(
     ids=ids,
-    documents=chunks,
+    documents=all_chunks,
     embeddings=embeddings.tolist(),
     metadatas=metadatas
 )
 
-print("\nDocuments stored successfully!")
 
-print("Total documents in collection:", collection.count())
+print("\n===== DOCUMENT STORAGE COMPLETE =====")
+
+print("Documents loaded:", len(documents))
+print("Total chunks stored:", len(all_chunks))
+print("ChromaDB collection count:", collection.count())
+
+print("\n===== STORED DOCUMENTS =====")
+
+for document in documents:
+    print("-", document["file_name"])
+
+print("\n=====================================")

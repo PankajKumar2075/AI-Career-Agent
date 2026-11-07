@@ -18,8 +18,7 @@ from generative_ai.ollama_service import (
     generate_chat_response
 )
 from fastapi import HTTPException
-from generative_ai.rag.rag_pipeline import generate_rag_response
-
+from generative_ai.rag.rag_pipeline import generate_rag_result
 
 
 
@@ -503,20 +502,14 @@ def personalized_ai_chat(request: CareerChatRequest):
 
 @app.post("/rag-career-advice")
 def rag_career_advice(request: RAGQuestion):
-    try:
-        answer = generate_rag_response(
-            request.question,
-            category=request.category
-        )
 
-        return {
-            "question": request.question,
-            "category": request.category,
-            "ai_response": answer
-        }
+    result = generate_rag_result(
+        request.question,
+        category=request.category
+    )
 
-    except Exception as e:
-        raise HTTPException(
-            status_code=503,
-            detail=f"RAG service unavailable: {str(e)}"
-        )
+    return {
+        "answer": result["answer"],
+        "sources": result["sources"],
+        "total_chunks_used": result["total_chunks_used"]
+    }

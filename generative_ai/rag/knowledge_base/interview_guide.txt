@@ -1,0 +1,29 @@
+TECHNICAL INTERVIEW PREPARATION GUIDE
+
+Introduction:
+Technical interviews evaluate programming knowledge,
+problem-solving ability, technical fundamentals and communication.
+
+Data Structures and Algorithms:
+Practice arrays, strings, linked lists, stacks, queues,
+trees, graphs, hashing, recursion and dynamic programming.
+
+Programming:
+Understand object-oriented programming, functions,
+memory management, exception handling and complexity analysis.
+
+Computer Science Fundamentals:
+Prepare operating systems, database management systems,
+computer networks and software engineering.
+
+Project Preparation:
+Understand project architecture, technology choices,
+important features, challenges and your individual contribution.
+
+Practice:
+Solve coding problems regularly, explain your approach
+clearly and participate in mock interviews.
+
+Resume Preparation:
+Keep your resume concise, highlight measurable achievements,
+include relevant projects and mention technical skills accurately.

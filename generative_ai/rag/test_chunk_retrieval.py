@@ -1,46 +1,48 @@
 
 from pathlib import Path
 import chromadb
-from sentence_transformers import SentenceTransformer
 
-# Load embedding model
-model = SentenceTransformer("all-MiniLM-L6-v2")
-
-# Connect to ChromaDB
 DB_PATH = Path(__file__).resolve().parent / "chroma_db"
 
 client = chromadb.PersistentClient(path=str(DB_PATH))
 
-collection = client.get_collection(
-    name="career_knowledge"
+collection = client.get_collection("career_knowledge")
+
+
+# Retrieve all stored document metadata
+results = collection.get(
+    include=["documents", "metadatas"]
 )
 
-# Ask a question
-question = "Which Python libraries should I learn for Machine Learning?"
+print("\n===== CHROMADB DOCUMENT VERIFICATION =====")
 
-# Convert question into embedding
-query_embedding = model.encode([question])
+print("Total chunks stored:", len(results["ids"]))
 
-# Search relevant chunks
-results = collection.query(
-    query_embeddings=query_embedding.tolist(),
-    n_results=3,
-    where={
-        "source": "machine_learning.txt"
-    }
-)
+# Group chunks by source
+document_summary = {}
 
-# Display retrieved results
-print("\nQuestion:", question)
+for metadata in results["metadatas"]:
 
-for i, document in enumerate(results["documents"][0], start=1):
+    source = metadata.get("source", "Unknown")
 
-    metadata = results["metadatas"][0][i - 1]
-    distance = results["distances"][0][i - 1]
+    if source not in document_summary:
+        document_summary[source] = 0
 
-    print(f"\n--- Result {i} ---")
-    print("Category:", metadata["category"])
-    print("Source:", metadata["source"])
-    print("Chunk number:", metadata["chunk_number"])
-    print("Distance:", round(distance, 4))
-    print("Content:", document)
+    document_summary[source] += 1
+
+
+print("\n===== DOCUMENT SUMMARY =====")
+
+for source, count in document_summary.items():
+    print(f"{source}: {count} chunks")
+
+
+print("\n===== SAMPLE STORED CHUNKS =====")
+
+for i in range(min(5, len(results["ids"]))):
+
+    print("\nChunk ID:", results["ids"][i])
+    print("Metadata:", results["metadatas"][i])
+    print("Content:", results["documents"][i][:200])
+
+print("\n========================================")
