@@ -49,8 +49,11 @@ function App() {
 
   const totalWeeks = roadmapResult?.roadmap?.length || 0;
 
-  const completedCount = Object.values(completedWeeks)
-    .filter(Boolean).length;
+  const completedCount = roadmapResult?.roadmap
+    ? roadmapResult.roadmap.filter(
+        (item) => Boolean(completedWeeks[item.week])
+      ).length
+    : 0;
 
   const progressPercentage = totalWeeks > 0
     ? Math.round((completedCount / totalWeeks) * 100)
@@ -512,654 +515,769 @@ const handleSubmitInterview = async () => {
 };
 
 
+  
   return (
-    <div className="app">
-
-      <header className="header">
-        <h1>AI Career Agent</h1>
-        <p>
-          Discover your career path and identify
-          the skills you need to improve.
-        </p>
-      </header>
-
-      <main className="container">
-
-        {/* Shared skill inputs */}
-
-        <section className="skill-form">
-          <h2>Your Technical Skills</h2>
-
-          <p>Rate your current skills from 1 to 10.</p>
-
-          <div className="skill-grid">
-
-            {skillNames.map((skill) => (
-              <div className="skill-item" key={skill}>
-
-                <label htmlFor={skill}>
-                  {skill.replace("_", " ")}
-                </label>
-
-                <div className="skill-input">
-
-                  <input
-                    id={skill}
-                    type="range"
-                    name={skill}
-                    min="1"
-                    max="10"
-                    value={skills[skill]}
-                    onChange={handleChange}
-                  />
-
-                  <span>{skills[skill]}/10</span>
-
-                </div>
-
-              </div>
-            ))}
-
+    <div className="app dashboard-layout">
+      {/* Sidebar */}
+      <aside className="sidebar">
+        <div className="brand">
+          <div className="brand-icon">AI</div>
+          <div>
+            <h2>CareerPilot</h2>
+            <span>Intelligent Career Platform</span>
           </div>
-        </section>
+        </div>
 
-        {/* Career recommendation */}
+        <div className="sidebar-label">WORKSPACE</div>
 
-        <section className="skill-form">
-          <h2>Career Recommendation</h2>
+        <nav className="sidebar-nav">
+          <a href="#dashboard" className="nav-link active">
+            <span>◫</span> Dashboard
+          </a>
+          <a href="#skills" className="nav-link">
+            <span>⌘</span> My Skills
+          </a>
+          <a href="#career" className="nav-link">
+            <span>◎</span> Career Analysis
+          </a>
+          <a href="#roadmap" className="nav-link">
+            <span>↗</span> Learning Roadmap
+          </a>
+          <a href="#interview" className="nav-link">
+            <span>▤</span> Mock Interview
+          </a>
+          <a href="#assistant" className="nav-link">
+            <span>✳</span> AI Assistant
+          </a>
+          <a href="#knowledge" className="nav-link">
+            <span>◈</span> Knowledge Base
+          </a>
+        </nav>
 
-          <p>
-            Find the career category that best matches
-            your current skills.
-          </p>
-
-          <form onSubmit={handleSubmit}>
-
-            <button type="submit" disabled={loading}>
-              {loading ? "Analyzing..." : "Predict My Career"}
-            </button>
-
-          </form>
-
-          {error && <div className="error">{error}</div>}
-
-          {result && (
-            <div className="result">
-
-              <h3>{result.recommended_career}</h3>
-
-              <h4>Career Model Scores</h4>
-
-              {Object.entries(result.career_scores).map(
-                ([career, score]) => (
-                  <div className="score-item" key={career}>
-
-                    <div className="score-heading">
-                      <span>{career}</span>
-                      <strong>{score}%</strong>
-                    </div>
-
-                    <div className="score-track">
-                      <div
-                        className="score-fill"
-                        style={{ width: `${score}%` }}
-                      />
-                    </div>
-
-                  </div>
-                )
-              )}
-
-              <p className="disclaimer">
-                Experimental scores based on synthetic training data.
-                They are not real-world career success probabilities.
-              </p>
-
+        <div className="sidebar-bottom">
+          <div className="sidebar-status">
+            <span className="status-dot"></span>
+            AI Services
+            <strong>Connected</strong>
+          </div>
+          <div className="sidebar-profile">
+            <div className="profile-avatar">PK</div>
+            <div>
+              <strong>Student Workspace</strong>
+              <span>Career Development</span>
             </div>
-          )}
-        </section>
+          </div>
+        </div>
+      </aside>
 
-        {/* Skill gap analysis */}
+      {/* Main dashboard */}
+      <main className="main-content">
+        <header className="topbar">
+          <div>
+            <span className="breadcrumb">Workspace / Dashboard</span>
+            <h1>Career Dashboard</h1>
+          </div>
+          <div className="topbar-right">
+            <span className="system-status">
+              <span className="status-dot"></span>
+              System operational
+            </span>
+            <div className="topbar-avatar">PK</div>
+          </div>
+        </header>
 
-        <section className="skill-form">
-
-          <h2>Skill Gap Analysis</h2>
-
-          <p>
-            Select your target career to discover
-            which skills you need to improve.
-          </p>
-
-          <form onSubmit={handleGapSubmit}>
-
-            <label htmlFor="targetCareer">
-              Select Your Target Career
-            </label>
-
-            <select
-              id="targetCareer"
-              value={targetCareer}
-              onChange={(e) => {
-                setTargetCareer(e.target.value);
-                setGapResult(null);
-                setRoadmapResult(null);
-                setRoadmapError("");
-              }}
-            >
-              {careerOptions.map((career) => (
-                <option key={career} value={career}>
-                  {career}
-                </option>
-              ))}
-            </select>
-
-            <button type="submit" disabled={gapLoading}>
-              {gapLoading
-                ? "Analyzing Skill Gaps..."
-                : "Analyze My Skill Gaps"}
-            </button>
-
-          </form>
-
-          {gapError && (
-            <div className="error">{gapError}</div>
-          )}
-
-          {gapResult && (
-            <div className="gap-result">
-
-              <h3>{gapResult.target_career}</h3>
-
-              <div className="coverage">
-                <span>Skill Requirement Coverage</span>
-
-                <strong>
-                  {gapResult.coverage_score}%
-                </strong>
-              </div>
-
-              <div className="score-track">
-                <div
-                  className="score-fill"
-                  style={{
-                    width: `${gapResult.coverage_score}%`,
-                  }}
-                />
-              </div>
-
-              <h3>Skill-by-Skill Analysis</h3>
-
-              {Object.entries(gapResult.skill_gaps).map(
-                ([skill, details]) => (
-
-                  <div className="gap-item" key={skill}>
-
-                    <div className="gap-heading">
-                      <strong>{skill.replace("_", " ")}</strong>
-
-                      <span
-                        className={
-                          details.gap > 0
-                            ? "needs-improvement"
-                            : "requirement-met"
-                        }
-                      >
-                        {details.status}
-                      </span>
-                    </div>
-
-                    <p>
-                      Current: {details.current_level}/10
-                      {" | "}
-                      Required: {details.required_level}/10
-                    </p>
-
-                    <div className="score-track">
-                      <div
-                        className="score-fill"
-                        style={{
-                          width: `${
-                            (details.current_level / 10) * 100
-                          }%`,
-                        }}
-                      />
-                    </div>
-
-                    {details.gap > 0 && (
-                      <p className="gap-text">
-                        Improve by {details.gap} level(s)
-                      </p>
-                    )}
-
-                  </div>
-
-                )
-              )}
-
-              <p className="disclaimer">
-                Benchmarks are illustrative and should not be
-                interpreted as validated industry requirements.
-              </p>
-
-            </div>
-          )}
-
-        </section>
-
-        
-        {/* Personalized Learning Roadmap */}
-
-        <section className="skill-form">
-
-          <h2>Personalized Learning Roadmap</h2>
-
-          <p>
-            Generate a week-by-week learning plan based on
-            your current skills and target career.
-          </p>
-
-          <button
-            type="button"
-            onClick={handleRoadmapSubmit}
-            disabled={roadmapLoading}
-          >
-            {roadmapLoading
-              ? "AI Agent is Creating Your Plan..."
-              : "Generate AI Learning Plan"}
-          </button>
-
-          {roadmapError && (
-            <div className="error">{roadmapError}</div>
-          )}
-
-          {roadmapResult && (
-            <div className="roadmap-result">
-
-              <h3>{roadmapResult.target_career}</h3>
-
-              <div className="roadmap-summary">
-                <strong>
-                  {roadmapResult.total_weeks} Weeks
-                </strong>
-                <span>Total Learning Duration</span>
-              </div>
-
+        <div className="dashboard-content">
+          {/* Dashboard overview */}
+          <section id="dashboard" className="welcome-section">
+            <div>
+              <span className="eyebrow">YOUR CAREER JOURNEY</span>
+              <h2>Build your future with AI.</h2>
               <p>
-                  Skill Requirement Coverage:{" "}
-                  <strong>{roadmapResult.coverage_score}%</strong>
+                Analyze your skills, discover career opportunities, and
+                follow a personalized learning path.
               </p>
+            </div>
+            <div className="welcome-decoration">
+              <div className="decoration-orbit orbit-one"></div>
+              <div className="decoration-orbit orbit-two"></div>
+              <div className="decoration-core">AI</div>
+            </div>
+          </section>
 
-              {/* AI-generated learning guidance */}
+          <section className="overview-grid">
+            <div className="overview-card">
+              <div className="overview-card-top">
+                <span>Technical Skills</span>
+                <span className="overview-icon">⌘</span>
+              </div>
+              <strong>{skillNames.length}</strong>
+              <p>Skills being tracked</p>
+            </div>
 
-              {roadmapResult.explanation && (
-                  <div className="ai-learning-guidance">
+            <div className="overview-card">
+              <div className="overview-card-top">
+                <span>Target Career</span>
+                <span className="overview-icon">◎</span>
+              </div>
+              <strong className="overview-career">{targetCareer}</strong>
+              <p>Your selected career path</p>
+            </div>
 
-                      <h3>AI Learning Guidance</h3>
+            <div className="overview-card">
+              <div className="overview-card-top">
+                <span>Learning Progress</span>
+                <span className="overview-icon">↗</span>
+              </div>
+              <strong>{progressPercentage}%</strong>
+              <p>
+                {completedCount} of {totalWeeks} weeks completed
+              </p>
+            </div>
 
-                      <div className="ai-guidance-content">
-                          <p style={{ whiteSpace: "pre-wrap" }}>
-                              {roadmapResult.explanation}
-                          </p>
-                      </div>
+            <div className="overview-card">
+              <div className="overview-card-top">
+                <span>Interview Questions</span>
+                <span className="overview-icon">▤</span>
+              </div>
+              <strong>
+                {interviewReport?.interview_summary?.questions_evaluated ?? 0}
+              </strong>
+              <p>Questions evaluated in latest report</p>
+            </div>
+          </section>
 
-                  </div>
-              )}
-
-              <h3>Your Weekly Plan</h3>
-
-              <div className="progress-section">
-
-                <div className="progress-heading">
-                  <strong>Overall Learning Progress</strong>
-
-                  <strong>{progressPercentage}%</strong>
-                </div>
-
-                <div className="score-track">
-                  <div
-                    className="score-fill"
-                    style={{ width: `${progressPercentage}%` }}
-                  />
-                </div>
-
+          {/* Skills */}
+          <section id="skills" className="dashboard-section">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">SKILL PROFILE</span>
+                <h2>Your Technical Skills</h2>
                 <p>
-                  {completedCount} of {totalWeeks} weeks completed
+                  Rate your current proficiency to personalize your career
+                  recommendations.
+                </p>
+              </div>
+              <span className="section-tag">7 tracked skills</span>
+            </div>
+
+            <div className="panel skill-panel">
+              <div className="skill-grid">
+                {skillNames.map((skill) => (
+                  <div className="skill-item" key={skill}>
+                    <div className="skill-label-row">
+                      <label htmlFor={skill}>
+                        {skill.replace("_", " ")}
+                      </label>
+                      <strong>{skills[skill]}/10</strong>
+                    </div>
+                    <input
+                      id={skill}
+                      type="range"
+                      name={skill}
+                      min="1"
+                      max="10"
+                      value={skills[skill]}
+                      onChange={handleChange}
+                    />
+                    <div className="skill-scale">
+                      <span>Beginner</span>
+                      <span>Advanced</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="panel-note">
+                Your skill ratings are used by the career prediction,
+                skill-gap analysis, and AI learning modules.
+              </p>
+            </div>
+          </section>
+
+          {/* Career analysis */}
+          <section id="career" className="dashboard-section">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">MACHINE LEARNING</span>
+                <h2>Career Analysis</h2>
+                <p>
+                  Discover a potential career match and understand the skills
+                  required for your chosen direction.
+                </p>
+              </div>
+            </div>
+
+            <div className="two-column-grid">
+              <div className="panel">
+                <div className="panel-heading">
+                  <div>
+                    <h3>Career Recommendation</h3>
+                    <p>ML-powered career prediction</p>
+                  </div>
+                  <span className="panel-icon">◎</span>
+                </div>
+
+                <p className="panel-description">
+                  Analyze your current technical skills to identify the
+                  career category that best matches your profile.
                 </p>
 
+                <button
+                  type="button"
+                  onClick={handleSubmit}
+                  disabled={loading}
+                  className="primary-button"
+                >
+                  {loading ? "Analyzing profile..." : "Predict My Career"}
+                  <span>→</span>
+                </button>
+
+                {error && <div className="error">{error}</div>}
+
+                {result && (
+                  <div className="result career-result">
+                    <span className="result-label">RECOMMENDED CAREER</span>
+                    <h3>{result.recommended_career}</h3>
+
+                    <h4>Career Model Scores</h4>
+                    {Object.entries(result.career_scores).map(
+                      ([career, score]) => (
+                        <div className="score-item" key={career}>
+                          <div className="score-heading">
+                            <span>{career}</span>
+                            <strong>{score}%</strong>
+                          </div>
+                          <div className="score-track">
+                            <div
+                              className="score-fill"
+                              style={{ width: `${score}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    )}
+
+                    <p className="disclaimer">
+                      Experimental scores based on synthetic training data.
+                      They are not real-world career success probabilities.
+                    </p>
+                  </div>
+                )}
               </div>
 
-              {roadmapResult.roadmap.map((item, index) => (
-                <div
-                  className="roadmap-week"
-                  key={`${item.week}-${item.skill}-${index}`}
-                >
-
-                  <div className="roadmap-week-heading">
-                    <span>Week {item.week}</span>
-                    <strong>
-                      {item.skill.replace("_", " ")}
-                      <label className="week-checkbox">
-
-                        <input
-                          type="checkbox"
-                          checked={Boolean(completedWeeks[item.week])}
-                          onChange={() => handleWeekToggle(item.week)}
-                        />
-
-                            Completed
-
-                      </label>
-                    </strong>
+              <div className="panel">
+                <div className="panel-heading">
+                  <div>
+                    <h3>Skill Gap Analysis</h3>
+                    <p>Compare your skills with career requirements</p>
                   </div>
-
-                  <h4>Topics to Learn</h4>
-
-                  <ul>
-                    {item.topics.map((topic, topicIndex) => (
-                      <li key={topicIndex}>{topic}</li>
-                    ))}
-                  </ul>
-
-                  <div className="roadmap-task">
-                    <strong>Practical Task:</strong>
-                    <p>{item.task}</p>
-                  </div>
-
+                  <span className="panel-icon">⌁</span>
                 </div>
-              ))}
 
-              <p className="disclaimer">
-                This roadmap is generated using rule-based
-                scheduling. Learning duration is an estimate
-                and can vary with your pace.
-              </p>
+                <form onSubmit={handleGapSubmit} className="analysis-form">
+                  <label htmlFor="targetCareer">Target career</label>
+                  <select
+                    id="targetCareer"
+                    value={targetCareer}
+                    onChange={(e) => {
+                      setTargetCareer(e.target.value);
+                      setGapResult(null);
+                      setRoadmapResult(null);
+                      setRoadmapError("");
+                    }}
+                  >
+                    {careerOptions.map((career) => (
+                      <option key={career} value={career}>
+                        {career}
+                      </option>
+                    ))}
+                  </select>
 
+                  <button
+                    type="submit"
+                    disabled={gapLoading}
+                    className="primary-button"
+                  >
+                    {gapLoading ? "Analyzing gaps..." : "Analyze Skill Gaps"}
+                    <span>→</span>
+                  </button>
+                </form>
+
+                {gapError && <div className="error">{gapError}</div>}
+
+                {gapResult && (
+                  <div className="gap-result">
+                    <div className="coverage">
+                      <span>Requirement coverage</span>
+                      <strong>{gapResult.coverage_score}%</strong>
+                    </div>
+                    <div className="score-track">
+                      <div
+                        className="score-fill"
+                        style={{ width: `${gapResult.coverage_score}%` }}
+                      />
+                    </div>
+
+                    <h3>Skill-by-Skill Analysis</h3>
+                    {Object.entries(gapResult.skill_gaps).map(
+                      ([skill, details]) => (
+                        <div className="gap-item" key={skill}>
+                          <div className="gap-heading">
+                            <strong>{skill.replace("_", " ")}</strong>
+                            <span
+                              className={
+                                details.gap > 0
+                                  ? "needs-improvement"
+                                  : "requirement-met"
+                              }
+                            >
+                              {details.status}
+                            </span>
+                          </div>
+                          <p>
+                            Current: {details.current_level}/10
+                            {" · "}
+                            Required: {details.required_level}/10
+                          </p>
+                          <div className="score-track">
+                            <div
+                              className="score-fill"
+                              style={{
+                                width: `${
+                                  (details.current_level / 10) * 100
+                                }%`,
+                              }}
+                            />
+                          </div>
+                          {details.gap > 0 && (
+                            <p className="gap-text">
+                              Improve by {details.gap} level(s)
+                            </p>
+                          )}
+                        </div>
+                      )
+                    )}
+
+                    <p className="disclaimer">
+                      Benchmarks are illustrative, not validated industry
+                      requirements.
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-          )}
+          </section>
 
-        </section>
+          {/* Learning roadmap */}
+          <section id="roadmap" className="dashboard-section">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">PERSONALIZED DEVELOPMENT</span>
+                <h2>Learning Roadmap</h2>
+                <p>
+                  Turn your skill gaps into a structured, week-by-week
+                  learning journey.
+                </p>
+              </div>
+            </div>
 
-        {/* AI Mock Interview Agent */}
+            <div className="panel">
+              <div className="panel-heading">
+                <div>
+                  <h3>Your AI Learning Plan</h3>
+                  <p>
+                    Generated for your selected career: {targetCareer}
+                  </p>
+                </div>
+                <span className="panel-icon">↗</span>
+              </div>
 
-        <section className="skill-form interview-section">
+              <button
+                type="button"
+                onClick={handleRoadmapSubmit}
+                disabled={roadmapLoading}
+                className="primary-button"
+              >
+                {roadmapLoading
+                  ? "AI Agent is creating your plan..."
+                  : "Generate AI Learning Plan"}
+                <span>→</span>
+              </button>
 
-            <h2>AI Mock Interview</h2>
+              {roadmapError && <div className="error">{roadmapError}</div>}
 
-            <p>
-                Practice technical interviews for your target career.
-                Get AI-generated questions, answer evaluations, and
-                personalized improvement feedback.
-            </p>
+              {roadmapResult && (
+                <div className="roadmap-result">
+                  <div className="roadmap-overview">
+                    <div>
+                      <span className="result-label">TARGET CAREER</span>
+                      <h3>{roadmapResult.target_career}</h3>
+                    </div>
+                    <div className="roadmap-summary">
+                      <strong>{roadmapResult.total_weeks}</strong>
+                      <span>Weeks</span>
+                    </div>
+                    <div className="roadmap-summary">
+                      <strong>{roadmapResult.coverage_score}%</strong>
+                      <span>Skill coverage</span>
+                    </div>
+                  </div>
 
-            <div className="interview-settings">
+                  {roadmapResult.explanation && (
+                    <div className="ai-learning-guidance">
+                      <h3>AI Learning Guidance</h3>
+                      <div className="ai-guidance-content">
+                        <p style={{ whiteSpace: "pre-wrap" }}>
+                          {roadmapResult.explanation}
+                        </p>
+                      </div>
+                    </div>
+                  )}
 
+                  <div className="progress-section">
+                    <div className="progress-heading">
+                      <strong>Overall Learning Progress</strong>
+                      <strong>{progressPercentage}%</strong>
+                    </div>
+                    <div className="score-track">
+                      <div
+                        className="score-fill"
+                        style={{ width: `${progressPercentage}%` }}
+                      />
+                    </div>
+                    <p>
+                      {completedCount} of {totalWeeks} weeks completed
+                    </p>
+                  </div>
+
+                  <div className="roadmap-timeline">
+                    {roadmapResult.roadmap.map((item, index) => (
+                      <div
+                        className="roadmap-week"
+                        key={`${item.week}-${item.skill}-${index}`}
+                      >
+                        <div className="roadmap-week-heading">
+                          <span>WEEK {item.week}</span>
+                          <label className="week-checkbox">
+                            <input
+                              type="checkbox"
+                              checked={Boolean(completedWeeks[item.week])}
+                              onChange={() => handleWeekToggle(item.week)}
+                            />
+                            Completed
+                          </label>
+                        </div>
+
+                        <h3>{item.skill.replace("_", " ")}</h3>
+                        <h4>Topics to learn</h4>
+                        <ul>
+                          {item.topics.map((topic, topicIndex) => (
+                            <li key={topicIndex}>{topic}</li>
+                          ))}
+                        </ul>
+
+                        <div className="roadmap-task">
+                          <strong>Practical task</strong>
+                          <p>{item.task}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  <p className="disclaimer">
+                    Learning duration is an estimate and may vary with your
+                    pace. Weekly scheduling is rule-based.
+                  </p>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* Mock interview */}
+          <section id="interview" className="dashboard-section">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">INTERVIEW PREPARATION</span>
+                <h2>AI Mock Interview</h2>
+                <p>
+                  Practice technical interviews and receive AI-generated
+                  evaluations and adaptive follow-up questions.
+                </p>
+              </div>
+            </div>
+
+            <div className="panel interview-section">
+              <div className="panel-heading">
+                <div>
+                  <h3>Interview Configuration</h3>
+                  <p>Customize your practice session</p>
+                </div>
+                <span className="panel-icon">▤</span>
+              </div>
+
+              <div className="interview-settings">
                 <label>
-                    Interview Difficulty
-
-                    <select
-                        value={interviewDifficulty}
-                        onChange={(e) => setInterviewDifficulty(e.target.value)}
-                        disabled={interviewLoading || interviewQuestions.length > 0}
-                    >
-                        <option value="easy">Easy</option>
-                        <option value="medium">Medium</option>
-                        <option value="hard">Hard</option>
-                    </select>
+                  Interview difficulty
+                  <select
+                    value={interviewDifficulty}
+                    onChange={(e) => setInterviewDifficulty(e.target.value)}
+                    disabled={interviewLoading || interviewQuestions.length > 0}
+                  >
+                    <option value="easy">Easy</option>
+                    <option value="medium">Medium</option>
+                    <option value="hard">Hard</option>
+                  </select>
                 </label>
 
                 <label>
-                    Number of Questions
-
-                    <select
-                        value={interviewCount}
-                        onChange={(e) => setInterviewCount(Number(e.target.value))}
-                        disabled={interviewLoading || interviewQuestions.length > 0}
-                    >
-                        <option value={3}>3 Questions</option>
-                        <option value={5}>5 Questions</option>
-                        <option value={10}>10 Questions</option>
-                    </select>
+                  Number of questions
+                  <select
+                    value={interviewCount}
+                    onChange={(e) => setInterviewCount(Number(e.target.value))}
+                    disabled={interviewLoading || interviewQuestions.length > 0}
+                  >
+                    <option value={3}>3 Questions</option>
+                    <option value={5}>5 Questions</option>
+                    <option value={10}>10 Questions</option>
+                  </select>
                 </label>
+              </div>
 
-            </div>
-
-            <button
+              <button
                 type="button"
                 onClick={handleGenerateInterview}
                 disabled={interviewLoading || interviewSubmitLoading}
-            >
+                className="primary-button"
+              >
                 {interviewLoading
-                    ? "Generating Interview Questions..."
-                    : interviewQuestions.length > 0
-                        ? "Generate New Interview"
-                        : "Start Mock Interview"}
-            </button>
+                  ? "Generating questions..."
+                  : interviewQuestions.length > 0
+                    ? "Generate New Interview"
+                    : "Start Mock Interview"}
+                <span>→</span>
+              </button>
 
-            {interviewError && (
-                <div className="error">{interviewError}</div>
-            )}
+              {interviewError && <div className="error">{interviewError}</div>}
 
-            {/* Generated questions and answer fields */}
-
-            {interviewQuestions.length > 0 && !interviewReport && (
-
+              {interviewQuestions.length > 0 && !interviewReport && (
                 <div className="interview-questions">
-
+                  <div className="interview-intro">
                     <h3>{targetCareer} Interview</h3>
-
                     <p>
-                        Difficulty: <strong>{interviewDifficulty}</strong>
-                        {" | "}
-                        Questions: <strong>{interviewQuestions.length}</strong>
+                      Difficulty: <strong>{interviewDifficulty}</strong>
+                      {" · "}
+                      Questions: <strong>{interviewQuestions.length}</strong>
                     </p>
+                  </div>
 
-                    {interviewQuestions.map((item, index) => (
-
-                        <div className="interview-question" key={index}>
-
-                            <h4>Question {index + 1}</h4>
-
-                            <p>{item}</p>
-
-                            <textarea
-                                rows="5"
-                                placeholder="Write your answer here..."
-                                value={interviewAnswers[index] || ""}
-                                onChange={(e) => {
-                                    const value = e.target.value;
-
-                                    setInterviewAnswers((previous) => ({
-                                        ...previous,
-                                        [index]: value,
-                                    }));
-                                }}
-                            />
-
-                        </div>
-
-                    ))}
-
-                    <button
-                        type="button"
-                        onClick={handleSubmitInterview}
-                        disabled={interviewSubmitLoading}
-                    >
-                        {interviewSubmitLoading
-                            ? "AI is Evaluating Your Answers..."
-                            : "Submit Interview for Evaluation"}
-                    </button>
-
-                </div>
-            )}
-
-            {/* Interview evaluation report */}
-
-            {interviewReport && (
-
-                <div className="interview-report">
-
-                    <h3>Interview Evaluation Report</h3>
-
-                    <p>
-                        Target Career: <strong>{interviewReport.target_career}</strong>
-                    </p>
-
-                    <p>
-                        Total Questions: <strong>{interviewReport.total_questions}</strong>
-                    </p>
-
-                    {/* Overall Interview Performance */}
-
-                    {interviewReport.interview_summary && (
-                        <div className="interview-summary">
-
-                            <h3>Overall Performance</h3>
-
-                            <div className="interview-summary-grid">
-
-                                <div className="interview-summary-card">
-                                    <span>Average Score</span>
-                                    <strong>
-                                        {interviewReport.interview_summary.average_score ?? "N/A"}
-                                        /10
-                                    </strong>
-                                </div>
-
-                                <div className="interview-summary-card">
-                                    <span>Performance Level</span>
-                                    <strong>
-                                        {interviewReport.interview_summary.performance_level}
-                                    </strong>
-                                </div>
-
-                                <div className="interview-summary-card">
-                                    <span>Questions Evaluated</span>
-                                    <strong>
-                                        {interviewReport.interview_summary.questions_evaluated}
-                                    </strong>
-                                </div>
-
-                            </div>
-
-                        </div>
-                    )}
-
-                    {interviewReport.interview_results.map((item) => (
-
-                        <div
-                            className="interview-result-item"
-                            key={item.question_number}
-                        >
-
-                            <h4>Question {item.question_number}</h4>
-
-                            <p><strong>Question:</strong> {item.question}</p>
-
-                            <p><strong>Your Answer:</strong></p>
-                            <p className="interview-answer">{item.answer}</p>
-
-                            <h4>AI Evaluation</h4>
-
-                            <div className="interview-feedback">
-                                <p style={{ whiteSpace: "pre-wrap" }}>
-                                    {item.evaluation}
-                                </p>
-                            </div>
-
-                            <h4>Adaptive Follow-up Question</h4>
-
-                            <div className="interview-feedback">
-                                <p style={{ whiteSpace: "pre-wrap" }}>
-                                    {item.follow_up_question}
-                                </p>
-                            </div>
-
-                        </div>
-
-                    ))}
-
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setInterviewQuestions([]);
-                            setInterviewAnswers({});
-                            setInterviewReport(null);
-                            setInterviewError("");
+                  {interviewQuestions.map((item, index) => (
+                    <div className="interview-question" key={index}>
+                      <span className="result-label">
+                        QUESTION {index + 1}
+                      </span>
+                      <h4>{item}</h4>
+                      <textarea
+                        rows="5"
+                        placeholder="Write your answer here..."
+                        value={interviewAnswers[index] || ""}
+                        onChange={(e) => {
+                          const value = e.target.value;
+                          setInterviewAnswers((previous) => ({
+                            ...previous,
+                            [index]: value,
+                          }));
                         }}
-                    >
-                        Start Another Interview
-                    </button>
-
-                </div>
-
-            )}
-
-        </section>
-
-        <section className="ai-section">
-          <h2>AI Career Assistant</h2>
-
-          <p>
-              Ask questions about your career, skills,
-              learning path and interview preparation.
-          </p>
-
-          <textarea
-              placeholder="Ask your career-related question..."
-              value={question}
-              onChange={(e) => setQuestion(e.target.value)}
-              rows="4"
-          />
-
-          <button
-              onClick={handleAIAdvice}
-              disabled={aiLoading}
-          >
-              {aiLoading ? "Generating..." : "Ask AI"}
-          </button>
-
-            {aiError && (
-                <p className="error-message">{aiError}</p>
-            )}
-
-            <div className="chat-messages">
-                {chatMessages.map((message, index) => (
-                    <div
-                        key={index}
-                        className={`chat-message ${message.role}`}
-                    >
-                        <strong>
-                            {message.role === "user"
-                                ? "You"
-                                : "AI Career Assistant"}
-                        </strong>
-
-                        <p>{message.content}</p>
+                      />
                     </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={handleSubmitInterview}
+                    disabled={interviewSubmitLoading}
+                    className="primary-button"
+                  >
+                    {interviewSubmitLoading
+                      ? "AI is evaluating your answers..."
+                      : "Submit for AI Evaluation"}
+                    <span>→</span>
+                  </button>
+                </div>
+              )}
+
+              {interviewReport && (
+                <div className="interview-report">
+                  <h3>Interview Evaluation Report</h3>
+                  <p>
+                    Target Career: <strong>{interviewReport.target_career}</strong>
+                  </p>
+                  <p>
+                    Total Questions: <strong>{interviewReport.total_questions}</strong>
+                  </p>
+
+                  {interviewReport.interview_summary && (
+                    <div className="interview-summary">
+                      <h3>Overall Performance</h3>
+                      <div className="interview-summary-grid">
+                        <div className="interview-summary-card">
+                          <span>Average Score</span>
+                          <strong>
+                            {interviewReport.interview_summary.average_score ?? "N/A"}
+                            /10
+                          </strong>
+                        </div>
+                        <div className="interview-summary-card">
+                          <span>Performance Level</span>
+                          <strong>
+                            {interviewReport.interview_summary.performance_level}
+                          </strong>
+                        </div>
+                        <div className="interview-summary-card">
+                          <span>Questions Evaluated</span>
+                          <strong>
+                            {interviewReport.interview_summary.questions_evaluated}
+                          </strong>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {interviewReport.interview_results.map((item) => (
+                    <div
+                      className="interview-result-item"
+                      key={item.question_number}
+                    >
+                      <h4>Question {item.question_number}</h4>
+                      <p><strong>Question:</strong> {item.question}</p>
+                      <p><strong>Your Answer:</strong></p>
+                      <p className="interview-answer">{item.answer}</p>
+
+                      <h4>AI Evaluation</h4>
+                      <div className="interview-feedback">
+                        <p style={{ whiteSpace: "pre-wrap" }}>
+                          {item.evaluation}
+                        </p>
+                      </div>
+
+                      <h4>Adaptive Follow-up Question</h4>
+                      <div className="interview-feedback">
+                        <p style={{ whiteSpace: "pre-wrap" }}>
+                          {item.follow_up_question}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    onClick={() => {
+                      setInterviewQuestions([]);
+                      setInterviewAnswers({});
+                      setInterviewReport(null);
+                      setInterviewError("");
+                    }}
+                  >
+                    Start Another Interview
+                  </button>
+                </div>
+              )}
+            </div>
+          </section>
+
+          {/* AI Assistant */}
+          <section id="assistant" className="dashboard-section">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">GENERATIVE AI</span>
+                <h2>AI Career Assistant</h2>
+                <p>
+                  Get personalized guidance about careers, skills, learning,
+                  and interview preparation.
+                </p>
+              </div>
+            </div>
+
+            <div className="panel ai-section">
+              <div className="panel-heading">
+                <div>
+                  <h3>Ask your career assistant</h3>
+                  <p>Powered by your local AI model</p>
+                </div>
+                <span className="panel-icon">✳</span>
+              </div>
+
+              <textarea
+                placeholder="For example: How should I prepare for an ML Engineer role?"
+                value={question}
+                onChange={(e) => setQuestion(e.target.value)}
+                rows="4"
+              />
+
+              <button
+                type="button"
+                onClick={handleAIAdvice}
+                disabled={aiLoading}
+                className="primary-button"
+              >
+                {aiLoading ? "Generating response..." : "Ask AI Assistant"}
+                <span>→</span>
+              </button>
+
+              {aiError && <p className="error-message">{aiError}</p>}
+
+              <div className="chat-messages">
+                {chatMessages.length === 0 && !aiLoading && (
+                  <div className="empty-state">
+                    <span>✳</span>
+                    <strong>Your AI conversation starts here</strong>
+                    <p>Ask a question to receive personalized career guidance.</p>
+                  </div>
+                )}
+
+                {chatMessages.map((message, index) => (
+                  <div
+                    key={index}
+                    className={`chat-message ${message.role}`}
+                  >
+                    <strong>
+                      {message.role === "user" ? "You" : "AI Career Assistant"}
+                    </strong>
+                    <p>{message.content}</p>
+                  </div>
                 ))}
 
-                {aiLoading && (
-                    <p>AI is thinking...</p>
-                )}
+                {aiLoading && <p className="loading-message">AI is thinking...</p>}
+              </div>
             </div>
-        </section>
+          </section>
 
+          {/* RAG Knowledge Assistant */}
+          <section id="knowledge" className="dashboard-section">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">RETRIEVAL-AUGMENTED GENERATION</span>
+                <h2>Career Knowledge Base</h2>
+                <p>
+                  Ask questions and retrieve relevant information from your
+                  career learning knowledge base.
+                </p>
+              </div>
+            </div>
 
-        <section className="rag-section">
-            <h2>RAG Career Knowledge Assistant</h2>
+            <div className="panel rag-section">
+              <div className="panel-heading">
+                <div>
+                  <h3>RAG Knowledge Assistant</h3>
+                  <p>Semantic search with retrieved source information</p>
+                </div>
+                <span className="panel-icon">◈</span>
+              </div>
 
-            <p>
-                Ask questions about machine learning,
-                programming, career roadmaps and projects.
-                Get answers using our career knowledge base.
-            </p>
-
-            <label>Select Knowledge Category:</label>
-
-            <select
+              <label>Select knowledge category</label>
+              <select
                 value={ragCategory}
                 onChange={(e) => setRagCategory(e.target.value)}
-            >
+              >
                 <option value="">All Categories</option>
                 <option value="Python">Python</option>
                 <option value="Machine Learning">Machine Learning</option>
@@ -1167,83 +1285,66 @@ const handleSubmitInterview = async () => {
                 <option value="Full Stack">Full Stack</option>
                 <option value="Data Analytics">Data Analytics</option>
                 <option value="Interview Preparation">Interview Preparation</option>
-            </select>
+              </select>
 
-            <textarea
-                placeholder="Ask a question using career knowledge..."
+              <textarea
+                placeholder="Ask a question about programming, ML, or career preparation..."
                 value={ragQuestion}
                 onChange={(e) => setRagQuestion(e.target.value)}
                 rows="4"
-            />
+              />
 
-            <button
+              <button
+                type="button"
                 onClick={handleRAGAdvice}
                 disabled={ragLoading}
-            >
-                {ragLoading ? "Searching Knowledge Base..." : "Ask RAG Assistant"}
-            </button>
+                className="primary-button"
+              >
+                {ragLoading ? "Searching knowledge base..." : "Search Knowledge Base"}
+                <span>→</span>
+              </button>
 
-            {ragError && (
-                <p className="error-message">{ragError}</p>
-            )}
+              {ragError && <p className="error-message">{ragError}</p>}
 
-            
-            {ragAnswer && (
+              {ragAnswer && (
                 <div className="rag-answer">
+                  <h3>Knowledge Base Response</h3>
+                  <div className="rag-answer-content">
+                    <p style={{ whiteSpace: "pre-wrap" }}>{ragAnswer}</p>
+                  </div>
 
-                    <h3>RAG Response</h3>
-
-                    <div className="rag-answer-content">
-                        <p style={{ whiteSpace: "pre-wrap" }}>
-                            {ragAnswer}
-                        </p>
+                  <div className="rag-sources">
+                    <div className="sources-heading">
+                      <h3>Retrieved Sources</h3>
+                      <span>{ragTotalChunks} chunks retrieved</span>
                     </div>
 
-                    <div className="rag-sources">
-
-                        <h3>Sources Used</h3>
-
-                        <p>
-                            Total retrieved chunks: <strong>{ragTotalChunks}</strong>
-                        </p>
-
-                        {ragSources.length > 0 ? (
-                            ragSources.map((source, index) => (
-                                <div className="rag-source-item" key={index}>
-
-                                    <h4>{source.source}</h4>
-
-                                    <p>
-                                        Category: {source.category}
-                                    </p>
-
-                                    <p>
-                                        Chunk: {source.chunk_number ?? "Not available"}
-                                    </p>
-
-                                    <p>
-                                        Retrieval distance: {source.distance}
-                                    </p>
-
-                                </div>
-                            ))
-                        ) : (
-                            <p>No relevant source documents were retrieved.</p>
-                        )}
-
-                    </div>
-
+                    {ragSources.length > 0 ? (
+                      ragSources.map((source, index) => (
+                        <div className="rag-source-item" key={index}>
+                          <h4>{source.source}</h4>
+                          <p>Category: {source.category}</p>
+                          <p>
+                            Chunk: {source.chunk_number ?? "Not available"}
+                          </p>
+                          <p>Retrieval distance: {source.distance}</p>
+                        </div>
+                      ))
+                    ) : (
+                      <p>No relevant source documents were retrieved.</p>
+                    )}
+                  </div>
                 </div>
-            )}
+              )}
+            </div>
+          </section>
 
-        </section>
-
+          <footer className="dashboard-footer">
+            <span>CareerPilot AI</span>
+            <span>Machine Learning · Generative AI · Agentic AI</span>
+          </footer>
+        </div>
       </main>
-
-      <footer>
-        AI Career Agent | Powered by Machine Learning
-      </footer>
-
     </div>
   );
 }
