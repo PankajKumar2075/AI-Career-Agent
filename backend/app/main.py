@@ -266,6 +266,32 @@ def analyze_skill_gap(student: SkillGapRequest):
 
 
 
+@app.post("/agentic-learning-plan")
+def agentic_learning_plan(student: SkillGapRequest):
+
+    # Import here to avoid circular imports
+    from agents.learning_agent.learning_agent import create_learning_plan
+
+    # Step 1: Calculate actual skill gaps
+    gap_result = analyze_skill_gap(student)
+
+    # Step 2: Generate the personalized learning plan
+    learning_result = create_learning_plan(
+        skill_gaps=gap_result["skill_gaps"],
+        target_career=gap_result["target_career"]
+    )
+
+    # Step 3: Return complete results
+    return {
+        "target_career": gap_result["target_career"],
+        "coverage_score": gap_result["coverage_score"],
+        "skill_gaps": gap_result["skill_gaps"],
+        "learning_plan": learning_result
+    }
+
+
+
+
 @app.post("/learning-roadmap")
 def create_learning_roadmap(student: SkillGapRequest):
 

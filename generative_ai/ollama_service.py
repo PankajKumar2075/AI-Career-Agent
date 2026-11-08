@@ -19,7 +19,7 @@ def generate_ai_response(prompt):
         response = requests.post(
             OLLAMA_URL,
             json=data,
-            timeout=120
+            timeout=300
         )
 
         response.raise_for_status()

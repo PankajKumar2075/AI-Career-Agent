@@ -41,6 +41,7 @@ function App() {
   const [loading, setLoading] = useState(false);
   const [gapLoading, setGapLoading] = useState(false);
   const [roadmapLoading, setRoadmapLoading] = useState(false);
+  const [agenticLearningError, setAgenticLearningError] = useState("");
 
   const [error, setError] = useState("");
   const [gapError, setGapError] = useState("");
@@ -162,45 +163,58 @@ function App() {
   };
 
   
-// Generate personalized learning roadmap
+// Generate AI-powered personalized learning plan
 const handleRoadmapSubmit = async () => {
     setRoadmapLoading(true);
     setRoadmapError("");
     setRoadmapResult(null);
 
     try {
-      const response = await fetch(
-        "http://127.0.0.1:8000/learning-roadmap",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            ...skills,
-            target_career: targetCareer,
-          }),
+        const response = await fetch(
+            "http://127.0.0.1:8000/agentic-learning-plan",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    ...skills,
+                    target_career: targetCareer,
+                }),
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(
+                data.detail || "AI learning plan generation failed."
+            );
         }
-      );
 
-      if (!response.ok) {
-        throw new Error("Learning roadmap generation failed.");
-      }
+        // Combine the Learning Agent response
+        // with the existing roadmap UI structure.
+        const learningPlan = {
+            ...data.learning_plan,
+            target_career: data.target_career,
+            coverage_score: data.coverage_score,
+            skill_gaps: data.skill_gaps,
+        };
 
-      const data = await response.json();
+        setRoadmapResult(learningPlan);
 
-      setRoadmapResult(data);
-      await loadSavedProgress();
+        await loadSavedProgress();
 
     } catch (err) {
-      console.error(err);
-      setRoadmapError(
-        "Could not connect to the learning roadmap API."
-      );
+        console.error("Learning Agent Error:", err);
+
+        setRoadmapError(
+            err.message || "Could not generate the AI learning plan."
+        );
     } finally {
-      setRoadmapLoading(false);
+        setRoadmapLoading(false);
     }
-  };
+};
 
 
 const handleWeekToggle = (week) => {
@@ -631,8 +645,8 @@ const handleRAGAdvice = async () => {
             disabled={roadmapLoading}
           >
             {roadmapLoading
-              ? "Generating Roadmap..."
-              : "Generate Learning Roadmap"}
+              ? "AI Agent is Creating Your Plan..."
+              : "Generate AI Learning Plan"}
           </button>
 
           {roadmapError && (
@@ -652,9 +666,25 @@ const handleRAGAdvice = async () => {
               </div>
 
               <p>
-                Skill Requirement Coverage:{" "}
-                <strong>{roadmapResult.coverage_score}%</strong>
+                  Skill Requirement Coverage:{" "}
+                  <strong>{roadmapResult.coverage_score}%</strong>
               </p>
+
+              {/* AI-generated learning guidance */}
+
+              {roadmapResult.explanation && (
+                  <div className="ai-learning-guidance">
+
+                      <h3>AI Learning Guidance</h3>
+
+                      <div className="ai-guidance-content">
+                          <p style={{ whiteSpace: "pre-wrap" }}>
+                              {roadmapResult.explanation}
+                          </p>
+                      </div>
+
+                  </div>
+              )}
 
               <h3>Your Weekly Plan</h3>
 
