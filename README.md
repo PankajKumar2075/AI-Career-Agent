@@ -2,7 +2,7 @@
 
 An intelligent career preparation platform built using Machine Learning, Generative AI, RAG, and Agentic AI.
 
-The platform analyzes resumes, recommends suitable career paths, identifies skill gaps, generates personalized learning roadmaps, and helps students prepare for placements.
+The platform analyzes resumes, recommends suitable career paths, identifies skill gaps, generates personalized learning roadmaps, and helps students prepare for placements through AI-powered mock interviews and performance evaluation.
 
 ## Main Modules
 
@@ -11,7 +11,8 @@ The platform analyzes resumes, recommends suitable career paths, identifies skil
 3. Skill Gap Analysis
 4. Personalized Learning Roadmap
 5. AI Mock Interview
-6. Performance Tracking
+6. Interview Performance Evaluation
+7. Performance Tracking
 
 ## Technology Stack
 
@@ -56,6 +57,11 @@ The platform analyzes resumes, recommends suitable career paths, identifies skil
 - [x] AI career advice and chat APIs
 - [x] RAG career advice API
 - [x] Agentic Learning Plan API
+- [x] Interview question generation API
+- [x] Interview answer evaluation API
+- [x] Adaptive follow-up question API
+- [x] Complete mock interview API
+- [x] Interview performance summary generation
 
 ### Phase 4: Frontend Development
 
@@ -68,6 +74,12 @@ The platform analyzes resumes, recommends suitable career paths, identifies skil
 - [x] AI Career Assistant chat interface
 - [x] RAG knowledge assistant interface
 - [x] Agentic Learning Agent integration
+- [x] AI Mock Interview interface
+- [x] Interview difficulty and question-count selection
+- [x] Interview answer submission
+- [x] AI evaluation and feedback display
+- [x] Adaptive follow-up question display
+- [x] Overall interview performance report
 
 ### Phase 5: Generative AI and RAG
 
@@ -97,34 +109,42 @@ The platform analyzes resumes, recommends suitable career paths, identifies skil
 - [x] Learning workflow integration
 - [x] Agentic Learning Plan API
 - [x] React dashboard integration with Learning Agent
-- [ ] Interview Agent development
+- [x] Interview Agent development
+- [x] AI-generated interview questions
+- [x] AI-based interview answer evaluation
+- [x] Adaptive follow-up question generation
+- [x] Optimized evaluation and follow-up generation
+- [x] Interview scoring and performance summary
+- [x] React Mock Interview integration
 - [ ] Complete multi-agent orchestration
 - [ ] Advanced agent tool integration
 
 ### Phase 7: Testing and Deployment
 
 - [ ] End-to-end testing
-- [ ] Agent workflow testing
+- [ ] Complete multi-agent workflow testing
 - [ ] Frontend and backend deployment
 - [ ] Final documentation
 
 ## Current Agent Architecture
 
-The project currently includes three developed agents:
+The project currently includes four developed agents:
 
 1. **Resume Agent:** Extracts skills, projects, and resume statistics using resume analysis tools.
 2. **Career Agent:** Uses the trained Machine Learning model to recommend a career based on extracted resume skills.
 3. **Learning Agent:** Generates personalized learning roadmaps using skill gap analysis and provides AI-powered learning guidance.
+4. **Interview Agent:** Generates career-specific interview questions, evaluates candidate answers, generates adaptive follow-up questions, and provides performance reports.
 
-**Upcoming Agent:**
+**Upcoming Development:**
 
-4. **Interview Agent:** Will generate interview questions, evaluate candidate answers, and provide personalized feedback.
+Complete multi-agent orchestration to connect all four agents into a unified career preparation workflow.
 
 ## Current Agent Workflows
 
 - **Resume + Career Workflow:** Connects resume analysis with ML-based career recommendation.
 - **Learning Workflow:** Connects skill gap analysis with structured roadmap generation and AI learning guidance.
-- **Frontend Integration:** Displays personalized learning plans and supports learning progress tracking.
+- **Interview Workflow:** Generates mock interviews, evaluates candidate answers, provides adaptive follow-up questions, and calculates overall interview performance.
+- **Frontend Integration:** Provides interactive interfaces for learning plans, progress tracking, and AI-powered mock interviews.
 
 ## Current Backend APIs
 
@@ -140,6 +160,10 @@ The project currently includes three developed agents:
 | `/rag-career-advice` | Answers questions using the knowledge base |
 | `/save-progress` | Saves completed learning weeks |
 | `/get-progress/{student_id}/{target_career}` | Retrieves learning progress |
+| `/interview/questions` | Generates AI-powered interview questions |
+| `/interview/evaluate` | Evaluates an interview answer |
+| `/interview/follow-up` | Generates adaptive follow-up questions |
+| `/interview/mock` | Runs a complete mock interview and generates a performance report |
 
 ## Important Project Notes
 
@@ -147,21 +171,25 @@ The project currently includes three developed agents:
 - Career skill requirements are illustrative benchmarks.
 - Resume-based skill scores currently use skill presence as a proxy, not verified proficiency.
 - The learning roadmap uses rule-based scheduling, with an LLM providing additional learning guidance.
+- Interview evaluation scores are AI-generated assessments and should be treated as indicative feedback rather than objective measurements.
+- The local Qwen 2.5 3B model is used for AI-powered features through Ollama.
 
 ## Future Enhancements
 
-- Develop the Interview Agent.
-- Build complete multi-agent orchestration.
+- Build complete multi-agent orchestration connecting all four agents.
 - Integrate LangGraph for advanced agent workflows.
 - Add resume upload and document processing through the frontend.
 - Improve career recommendations using real-world datasets.
-- Add interview performance analytics.
+- Add advanced interview performance analytics.
+- Introduce persistent interview history and progress tracking.
 - Deploy the complete application.
 
 ## Project Repository
 
-GitHub: https://github.com/PankajKumar2075/AI-Career-Agent
+GitHub: [AI Career Agent](https://github.com/PankajKumar2075/AI-Career-Agent)
 
 ---
 
 **Project Status:** Phase 6 – Agentic AI Development (In Progress)
+
+**Completed:** Resume Agent, Career Agent, Learning Agent, and Interview Agent with frontend and backend integration.

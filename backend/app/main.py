@@ -81,6 +81,37 @@ class SkillGapRequest(StudentSkills):
         "Full Stack Developer"
     ]
 
+
+class InterviewQuestionRequest(BaseModel):
+    target_career: str
+    skills: list[str] = []
+    difficulty: Literal["easy", "medium", "hard"] = "medium"
+    num_questions: int = Field(default=5, ge=1, le=10)
+
+
+
+class InterviewAnswerRequest(BaseModel):
+    question: str
+    answer: str
+    target_career: str
+
+
+
+class FollowUpRequest(BaseModel):
+    question: str
+    answer: str
+    evaluation: str
+    target_career: str
+
+
+
+class MockInterviewRequest(BaseModel):
+    questions: list[str]
+    answers: list[str]
+    target_career: str
+
+
+
 class LearningProgressRequest(BaseModel):
     student_id: str = Field(min_length=1, max_length=100)
     target_career: Literal[
@@ -539,3 +570,66 @@ def rag_career_advice(request: RAGQuestion):
         "sources": result["sources"],
         "total_chunks_used": result["total_chunks_used"]
     }
+
+
+
+# ==============================
+# INTERVIEW AGENT APIs
+# ==============================
+
+@app.post("/interview/questions")
+def generate_interview_questions_api(request: InterviewQuestionRequest):
+
+    from agents.interview_agent.interview_agent import generate_interview_questions
+
+    result = generate_interview_questions(
+        target_career=request.target_career,
+        skills=request.skills,
+        difficulty=request.difficulty,
+        num_questions=request.num_questions
+    )
+
+    return result
+
+
+@app.post("/interview/evaluate")
+def evaluate_interview_answer_api(request: InterviewAnswerRequest):
+
+    from agents.interview_agent.interview_agent import evaluate_interview_answer
+
+    result = evaluate_interview_answer(
+        question=request.question,
+        answer=request.answer,
+        target_career=request.target_career
+    )
+
+    return result
+
+
+@app.post("/interview/follow-up")
+def generate_follow_up_api(request: FollowUpRequest):
+
+    from agents.interview_agent.interview_agent import generate_follow_up_question
+
+    result = generate_follow_up_question(
+        question=request.question,
+        answer=request.answer,
+        evaluation=request.evaluation,
+        target_career=request.target_career
+    )
+
+    return result
+
+
+@app.post("/interview/mock")
+def run_mock_interview_api(request: MockInterviewRequest):
+
+    from agents.interview_agent.interview_agent import run_mock_interview
+
+    result = run_mock_interview(
+        questions=request.questions,
+        answers=request.answers,
+        target_career=request.target_career
+    )
+
+    return result

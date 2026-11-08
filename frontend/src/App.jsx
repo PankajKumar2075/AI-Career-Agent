@@ -70,6 +70,16 @@ function App() {
   const [ragCategory, setRagCategory] = useState("");
   const [ragSources, setRagSources] = useState([]);
   const [ragTotalChunks, setRagTotalChunks] = useState(0);
+
+  // Interview Agent states
+const [interviewDifficulty, setInterviewDifficulty] = useState("medium");
+const [interviewCount, setInterviewCount] = useState(3);
+const [interviewQuestions, setInterviewQuestions] = useState([]);
+const [interviewAnswers, setInterviewAnswers] = useState({});
+const [interviewReport, setInterviewReport] = useState(null);
+const [interviewLoading, setInterviewLoading] = useState(false);
+const [interviewSubmitLoading, setInterviewSubmitLoading] = useState(false);
+const [interviewError, setInterviewError] = useState("");
   
 
     useEffect(() => {
@@ -389,6 +399,115 @@ const handleRAGAdvice = async () => {
         setRagError(error.message);
     } finally {
         setRagLoading(false);
+    }
+};
+
+
+// Generate career-specific interview questions
+const handleGenerateInterview = async () => {
+    setInterviewLoading(true);
+    setInterviewError("");
+    setInterviewQuestions([]);
+    setInterviewAnswers({});
+    setInterviewReport(null);
+
+    try {
+        const selectedSkills = skillNames
+            .filter((skill) => skills[skill] >= 5)
+            .map((skill) => skill.replace("_", " "));
+
+        const response = await fetch(
+            "http://127.0.0.1:8000/interview/questions",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    target_career: targetCareer,
+                    skills: selectedSkills,
+                    difficulty: interviewDifficulty,
+                    num_questions: Number(interviewCount),
+                }),
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || "Question generation failed.");
+        }
+
+        // Extract individual questions from the generated text
+        const questionMatches = [
+            ...data.questions.matchAll(
+                /Q\d+\.\s*([\s\S]*?)(?=\nQ\d+\.|$)/g
+            ),
+        ];
+
+        const parsedQuestions = questionMatches
+            .map((match) => match[1].trim())
+            .filter(Boolean);
+
+        if (parsedQuestions.length === 0) {
+            throw new Error("Could not extract questions. Please try again.");
+        }
+
+        setInterviewQuestions(parsedQuestions);
+
+    } catch (err) {
+        setInterviewError(err.message);
+    } finally {
+        setInterviewLoading(false);
+    }
+};
+
+
+// Submit answers for AI evaluation
+const handleSubmitInterview = async () => {
+    const unanswered = interviewQuestions.some(
+        (_, index) => !interviewAnswers[index]?.trim()
+    );
+
+    if (unanswered) {
+        setInterviewError("Please answer all interview questions before submitting.");
+        return;
+    }
+
+    setInterviewSubmitLoading(true);
+    setInterviewError("");
+    setInterviewReport(null);
+
+    try {
+        const response = await fetch(
+            "http://127.0.0.1:8000/interview/mock",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    questions: interviewQuestions,
+                    answers: interviewQuestions.map(
+                        (_, index) => interviewAnswers[index]
+                    ),
+                    target_career: targetCareer,
+                }),
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || "Interview evaluation failed.");
+        }
+
+        setInterviewReport(data);
+
+    } catch (err) {
+        setInterviewError(err.message);
+    } finally {
+        setInterviewSubmitLoading(false);
     }
 };
 
@@ -757,6 +876,223 @@ const handleRAGAdvice = async () => {
 
             </div>
           )}
+
+        </section>
+
+        {/* AI Mock Interview Agent */}
+
+        <section className="skill-form interview-section">
+
+            <h2>AI Mock Interview</h2>
+
+            <p>
+                Practice technical interviews for your target career.
+                Get AI-generated questions, answer evaluations, and
+                personalized improvement feedback.
+            </p>
+
+            <div className="interview-settings">
+
+                <label>
+                    Interview Difficulty
+
+                    <select
+                        value={interviewDifficulty}
+                        onChange={(e) => setInterviewDifficulty(e.target.value)}
+                        disabled={interviewLoading || interviewQuestions.length > 0}
+                    >
+                        <option value="easy">Easy</option>
+                        <option value="medium">Medium</option>
+                        <option value="hard">Hard</option>
+                    </select>
+                </label>
+
+                <label>
+                    Number of Questions
+
+                    <select
+                        value={interviewCount}
+                        onChange={(e) => setInterviewCount(Number(e.target.value))}
+                        disabled={interviewLoading || interviewQuestions.length > 0}
+                    >
+                        <option value={3}>3 Questions</option>
+                        <option value={5}>5 Questions</option>
+                        <option value={10}>10 Questions</option>
+                    </select>
+                </label>
+
+            </div>
+
+            <button
+                type="button"
+                onClick={handleGenerateInterview}
+                disabled={interviewLoading || interviewSubmitLoading}
+            >
+                {interviewLoading
+                    ? "Generating Interview Questions..."
+                    : interviewQuestions.length > 0
+                        ? "Generate New Interview"
+                        : "Start Mock Interview"}
+            </button>
+
+            {interviewError && (
+                <div className="error">{interviewError}</div>
+            )}
+
+            {/* Generated questions and answer fields */}
+
+            {interviewQuestions.length > 0 && !interviewReport && (
+
+                <div className="interview-questions">
+
+                    <h3>{targetCareer} Interview</h3>
+
+                    <p>
+                        Difficulty: <strong>{interviewDifficulty}</strong>
+                        {" | "}
+                        Questions: <strong>{interviewQuestions.length}</strong>
+                    </p>
+
+                    {interviewQuestions.map((item, index) => (
+
+                        <div className="interview-question" key={index}>
+
+                            <h4>Question {index + 1}</h4>
+
+                            <p>{item}</p>
+
+                            <textarea
+                                rows="5"
+                                placeholder="Write your answer here..."
+                                value={interviewAnswers[index] || ""}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+
+                                    setInterviewAnswers((previous) => ({
+                                        ...previous,
+                                        [index]: value,
+                                    }));
+                                }}
+                            />
+
+                        </div>
+
+                    ))}
+
+                    <button
+                        type="button"
+                        onClick={handleSubmitInterview}
+                        disabled={interviewSubmitLoading}
+                    >
+                        {interviewSubmitLoading
+                            ? "AI is Evaluating Your Answers..."
+                            : "Submit Interview for Evaluation"}
+                    </button>
+
+                </div>
+            )}
+
+            {/* Interview evaluation report */}
+
+            {interviewReport && (
+
+                <div className="interview-report">
+
+                    <h3>Interview Evaluation Report</h3>
+
+                    <p>
+                        Target Career: <strong>{interviewReport.target_career}</strong>
+                    </p>
+
+                    <p>
+                        Total Questions: <strong>{interviewReport.total_questions}</strong>
+                    </p>
+
+                    {/* Overall Interview Performance */}
+
+                    {interviewReport.interview_summary && (
+                        <div className="interview-summary">
+
+                            <h3>Overall Performance</h3>
+
+                            <div className="interview-summary-grid">
+
+                                <div className="interview-summary-card">
+                                    <span>Average Score</span>
+                                    <strong>
+                                        {interviewReport.interview_summary.average_score ?? "N/A"}
+                                        /10
+                                    </strong>
+                                </div>
+
+                                <div className="interview-summary-card">
+                                    <span>Performance Level</span>
+                                    <strong>
+                                        {interviewReport.interview_summary.performance_level}
+                                    </strong>
+                                </div>
+
+                                <div className="interview-summary-card">
+                                    <span>Questions Evaluated</span>
+                                    <strong>
+                                        {interviewReport.interview_summary.questions_evaluated}
+                                    </strong>
+                                </div>
+
+                            </div>
+
+                        </div>
+                    )}
+
+                    {interviewReport.interview_results.map((item) => (
+
+                        <div
+                            className="interview-result-item"
+                            key={item.question_number}
+                        >
+
+                            <h4>Question {item.question_number}</h4>
+
+                            <p><strong>Question:</strong> {item.question}</p>
+
+                            <p><strong>Your Answer:</strong></p>
+                            <p className="interview-answer">{item.answer}</p>
+
+                            <h4>AI Evaluation</h4>
+
+                            <div className="interview-feedback">
+                                <p style={{ whiteSpace: "pre-wrap" }}>
+                                    {item.evaluation}
+                                </p>
+                            </div>
+
+                            <h4>Adaptive Follow-up Question</h4>
+
+                            <div className="interview-feedback">
+                                <p style={{ whiteSpace: "pre-wrap" }}>
+                                    {item.follow_up_question}
+                                </p>
+                            </div>
+
+                        </div>
+
+                    ))}
+
+                    <button
+                        type="button"
+                        onClick={() => {
+                            setInterviewQuestions([]);
+                            setInterviewAnswers({});
+                            setInterviewReport(null);
+                            setInterviewError("");
+                        }}
+                    >
+                        Start Another Interview
+                    </button>
+
+                </div>
+
+            )}
 
         </section>
 

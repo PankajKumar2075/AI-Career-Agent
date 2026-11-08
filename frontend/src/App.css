@@ -579,3 +579,113 @@
 .ai-guidance-content p {
     margin: 0;
 }
+
+
+/* AI Mock Interview */
+
+.interview-section {
+    margin-top: 30px;
+}
+
+.interview-settings {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin: 20px 0;
+}
+
+.interview-settings label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    min-width: 180px;
+    font-weight: 600;
+}
+
+.interview-settings select {
+    padding: 10px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.interview-question,
+.interview-result-item {
+    padding: 20px;
+    margin-top: 20px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+}
+
+.interview-question textarea {
+    width: 100%;
+    box-sizing: border-box;
+    margin-top: 12px;
+    padding: 12px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    resize: vertical;
+    font: inherit;
+}
+
+.interview-feedback {
+    padding: 14px;
+    margin: 12px 0;
+    border-radius: 8px;
+    background: rgba(128, 128, 128, 0.10);
+}
+
+.interview-answer {
+    white-space: pre-wrap;
+}
+
+.interview-report {
+    margin-top: 25px;
+}
+
+@media (max-width: 600px) {
+    .interview-settings {
+        flex-direction: column;
+    }
+}
+
+
+/* Overall Interview Summary */
+
+.interview-summary {
+    margin: 25px 0;
+    padding: 20px;
+    border: 1px solid #ddd;
+    border-radius: 12px;
+}
+
+.interview-summary-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.interview-summary-card {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px;
+    border-radius: 10px;
+    background: rgba(128, 128, 128, 0.10);
+}
+
+.interview-summary-card span {
+    font-size: 14px;
+    opacity: 0.75;
+}
+
+.interview-summary-card strong {
+    font-size: 22px;
+}
+
+@media (max-width: 600px) {
+    .interview-summary-grid {
+        grid-template-columns: 1fr;
+    }
+}
