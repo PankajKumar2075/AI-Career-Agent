@@ -20,6 +20,7 @@ const careerOptions = [
 
 function App() {
   const studentId = "student_001";
+  const [activeSection, setActiveSection] = useState("dashboard");
 
   const [skills, setSkills] = useState({
     Python: 5,
@@ -83,6 +84,19 @@ const [interviewReport, setInterviewReport] = useState(null);
 const [interviewLoading, setInterviewLoading] = useState(false);
 const [interviewSubmitLoading, setInterviewSubmitLoading] = useState(false);
 const [interviewError, setInterviewError] = useState("");
+
+
+// Full Career Workflow states
+const [resumeText, setResumeText] = useState("");
+const [careerMode, setCareerMode] = useState("discover");
+const [selectedTargetCareer, setSelectedTargetCareer] = useState("");
+const [workflowDifficulty, setWorkflowDifficulty] = useState("medium");
+const [workflowQuestionCount, setWorkflowQuestionCount] = useState(5);
+
+const [workflowResult, setWorkflowResult] = useState(null);
+const [workflowLoading, setWorkflowLoading] = useState(false);
+const [workflowError, setWorkflowError] = useState("");
+const [careerPlanLoading, setCareerPlanLoading] = useState(false);
   
 
     useEffect(() => {
@@ -515,6 +529,98 @@ const handleSubmitInterview = async () => {
 };
 
 
+// Run the initial career workflow
+const handleFullCareerWorkflow = async () => {
+    if (resumeText.trim().length < 50) {
+        setWorkflowError("Please enter resume text containing at least 50 characters.");
+        return;
+    }
+
+    if (careerMode === "goal" && !selectedTargetCareer) {
+        setWorkflowError("Please select your target career.");
+        return;
+    }
+
+    setWorkflowLoading(true);
+    setWorkflowError("");
+    setWorkflowResult(null);
+
+    try {
+        const response = await fetch(
+            "http://127.0.0.1:8000/agents/full-career-workflow",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    resume_text: resumeText,
+                    mode: careerMode,
+                    target_career:
+                        careerMode === "goal" ? selectedTargetCareer : null,
+                    difficulty: workflowDifficulty,
+                    num_questions: Number(workflowQuestionCount),
+                }),
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || "The full career workflow failed.");
+        }
+
+        setWorkflowResult(data);
+
+    } catch (err) {
+        setWorkflowError(err.message);
+    } finally {
+        setWorkflowLoading(false);
+    }
+};
+
+
+// Continue workflow after the user selects a recommended career
+const handleSelectCareer = async (career) => {
+    setSelectedTargetCareer(career);
+    setCareerPlanLoading(true);
+    setWorkflowError("");
+
+    try {
+        const response = await fetch(
+            "http://127.0.0.1:8000/agents/continue-career-workflow",
+            {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                    resume_text: resumeText,
+                    target_career: career,
+                    difficulty: workflowDifficulty,
+                    num_questions: Number(workflowQuestionCount),
+                }),
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || "Could not generate your career plan.");
+        }
+
+        setWorkflowResult((current) => ({
+            ...current,
+            ...data,
+            workflow_stage: "completed",
+        }));
+
+    } catch (err) {
+        setWorkflowError(err.message);
+    } finally {
+        setCareerPlanLoading(false);
+    }
+};
   
   return (
     <div className="app dashboard-layout">
@@ -531,25 +637,68 @@ const handleSubmitInterview = async () => {
         <div className="sidebar-label">WORKSPACE</div>
 
         <nav className="sidebar-nav">
-          <a href="#dashboard" className="nav-link active">
+          <a
+            href="#dashboard"
+            className={`nav-link ${activeSection === "dashboard" ? "active" : ""}`}
+            onClick={() => setActiveSection("dashboard")}
+          >
             <span>◫</span> Dashboard
           </a>
-          <a href="#skills" className="nav-link">
+
+          <a
+            href="#skills"
+            className={`nav-link ${activeSection === "skills" ? "active" : ""}`}
+            onClick={() => setActiveSection("skills")}
+          >
             <span>⌘</span> My Skills
           </a>
-          <a href="#career" className="nav-link">
+
+          <a
+            href="#career"
+            className={`nav-link ${activeSection === "career" ? "active" : ""}`}
+            onClick={() => setActiveSection("career")}
+          >
             <span>◎</span> Career Analysis
           </a>
-          <a href="#roadmap" className="nav-link">
+
+          <a
+            href="#roadmap"
+            className={`nav-link ${activeSection === "roadmap" ? "active" : ""}`}
+            onClick={() => setActiveSection("roadmap")}
+          >
             <span>↗</span> Learning Roadmap
           </a>
-          <a href="#interview" className="nav-link">
+
+          <a
+            href="#interview"
+            className={`nav-link ${activeSection === "interview" ? "active" : ""}`}
+            onClick={() => setActiveSection("interview")}
+          >
             <span>▤</span> Mock Interview
           </a>
-          <a href="#assistant" className="nav-link">
+
+          <a
+            href="#workflow"
+            className={`nav-link ${activeSection === "workflow" ? "active" : ""}`}
+            onClick={() => setActiveSection("workflow")}
+          >
+            <span>✦</span> Full Career Workflow
+          </a>
+
+
+          <a
+            href="#assistant"
+            className={`nav-link ${activeSection === "assistant" ? "active" : ""}`}
+            onClick={() => setActiveSection("assistant")}
+          >
             <span>✳</span> AI Assistant
           </a>
-          <a href="#knowledge" className="nav-link">
+
+          <a
+            href="#knowledge"
+            className={`nav-link ${activeSection === "knowledge" ? "active" : ""}`}
+            onClick={() => setActiveSection("knowledge")}
+          >
             <span>◈</span> Knowledge Base
           </a>
         </nav>
@@ -1183,6 +1332,520 @@ const handleSubmitInterview = async () => {
               )}
             </div>
           </section>
+
+
+          
+          {/* Full Career Workflow */}
+          <section id="workflow" className="dashboard-section">
+            <div className="section-heading">
+              <div>
+                <span className="eyebrow">MULTI-AGENT AI SYSTEM</span>
+                <h2>Full Career Workflow</h2>
+                <p>
+                  Analyze your resume, discover suitable careers, generate a
+                  personalized learning roadmap, and prepare for interviews
+                  using four connected AI agents.
+                </p>
+              </div>
+            </div>
+
+            <div className="panel workflow-form-panel">
+              <div className="panel-heading">
+                <div>
+                  <span className="eyebrow">PERSONALIZED CAREER PLANNING</span>
+                  <h3>Where do you want your career to go?</h3>
+                  <p className="panel-description">
+                    Choose your career direction. Our AI agents will analyze your
+                    resume and help you plan your next steps.
+                  </p>
+                </div>
+              </div>
+
+              {/* Career mode selection */}
+              <div className="career-mode-grid">
+                <button
+                  type="button"
+                  className={`career-mode-card ${careerMode === "discover" ? "selected" : ""}`}
+                  onClick={() => {
+                    setCareerMode("discover");
+                    setWorkflowError("");
+                    setWorkflowResult(null);
+                  }}
+                >
+                  <span className="career-mode-icon">✦</span>
+                  <span className="career-mode-title">Discover My Career</span>
+                  <span className="career-mode-description">
+                    I'm exploring my options. Analyze my skills and recommend
+                    suitable career paths.
+                  </span>
+                  <span className="career-mode-indicator">
+                    {careerMode === "discover" ? "✓ Selected" : "Select this option"}
+                  </span>
+                </button>
+
+                <button
+                  type="button"
+                  className={`career-mode-card ${careerMode === "goal" ? "selected" : ""}`}
+                  onClick={() => {
+                    setCareerMode("goal");
+                    setWorkflowError("");
+                    setWorkflowResult(null);
+                  }}
+                >
+                  <span className="career-mode-icon">◎</span>
+                  <span className="career-mode-title">I Have a Career Goal</span>
+                  <span className="career-mode-description">
+                    I already know what I want to become. Build a personalized
+                    learning and interview preparation plan.
+                  </span>
+                  <span className="career-mode-indicator">
+                    {careerMode === "goal" ? "✓ Selected" : "Select this option"}
+                  </span>
+                </button>
+              </div>
+
+              {/* Target career selection */}
+              {careerMode === "goal" && (
+                <div className="career-goal-selection">
+                  <label htmlFor="workflow-target-career">
+                    What do you want to become?
+                  </label>
+
+                  <select
+                    id="workflow-target-career"
+                    value={selectedTargetCareer}
+                    onChange={(e) => setSelectedTargetCareer(e.target.value)}
+                  >
+                    <option value="">Select your target career</option>
+                    <option value="ML Engineer">Machine Learning Engineer</option>
+                    <option value="Data Analyst">Data Analyst</option>
+                    <option value="Full Stack Developer">Full Stack Developer</option>
+                  </select>
+
+                  <p className="panel-description">
+                    Your learning roadmap and interview questions will be
+                    tailored to this career.
+                  </p>
+                </div>
+              )}
+
+              {/* Resume input */}
+              <div className="analysis-form workflow-input-area">
+                <label htmlFor="workflow-resume">Your resume</label>
+
+                <textarea
+                  id="workflow-resume"
+                  value={resumeText}
+                  onChange={(e) => setResumeText(e.target.value)}
+                  placeholder="Paste your complete resume here, including education, skills, projects, experience, and achievements..."
+                  rows={10}
+                />
+
+                <div className="workflow-options">
+                  <div>
+                    <label htmlFor="workflow-difficulty">
+                      Interview difficulty
+                    </label>
+
+                    <select
+                      id="workflow-difficulty"
+                      value={workflowDifficulty}
+                      onChange={(e) => setWorkflowDifficulty(e.target.value)}
+                    >
+                      <option value="easy">Easy</option>
+                      <option value="medium">Medium</option>
+                      <option value="hard">Hard</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label htmlFor="workflow-question-count">
+                      Interview questions
+                    </label>
+
+                    <select
+                      id="workflow-question-count"
+                      value={workflowQuestionCount}
+                      onChange={(e) =>
+                        setWorkflowQuestionCount(Number(e.target.value))
+                      }
+                    >
+                      <option value={3}>3 Questions</option>
+                      <option value={5}>5 Questions</option>
+                      <option value={7}>7 Questions</option>
+                      <option value={10}>10 Questions</option>
+                    </select>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  className="primary-button"
+                  onClick={handleFullCareerWorkflow}
+                  disabled={workflowLoading}
+                >
+                  {workflowLoading ? (
+                    "Analyzing Your Career..."
+                  ) : (
+                    <>
+                      <span>✦</span>
+                      {careerMode === "discover"
+                        ? "Discover My Career"
+                        : "Build My Career Plan"}
+                    </>
+                  )}
+                </button>
+
+                <p className="panel-description">
+                  Multiple AI agents will analyze your resume and generate
+                  personalized career insights. This may take a few minutes.
+                </p>
+
+                {workflowError && (
+                  <div className="error-message">
+                    {workflowError}
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {workflowResult && (
+              <div className="workflow-results">
+
+                {/* Career discovery results */}
+                {workflowResult.workflow_stage === "career_selection_required" && (
+                  <>
+                    <div className="section-heading">
+                      <div>
+                        <span className="eyebrow">CAREER DISCOVERY COMPLETE</span>
+                        <h2>Career paths matching your profile</h2>
+                        <p>
+                          Explore the recommendations below and select the career
+                          you want to work towards.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="career-recommendation-grid">
+                      {workflowResult.career_result?.recommended_careers?.map(
+                        (option, index) => (
+                          <div className="panel career-recommendation-card" key={option.career}>
+                            <div className="recommendation-top">
+                              <span className="eyebrow">
+                                RECOMMENDATION {index + 1}
+                              </span>
+                              <span className="recommendation-rank">
+                                #{index + 1}
+                              </span>
+                            </div>
+
+                            <h3>{option.career}</h3>
+
+                            <div className="recommendation-score">
+                              <strong>
+                                {Math.round(option.ranking_score)}%
+                              </strong>
+                              <span>Model ranking score</span>
+                            </div>
+
+                            <div className="recommendation-score-track">
+                              <div
+                                className="recommendation-score-fill"
+                                style={{
+                                  width: `${Math.max(
+                                    0,
+                                    Math.min(100, option.ranking_score)
+                                  )}%`,
+                                }}
+                              />
+                            </div>
+
+                            <button
+                              type="button"
+                              className="primary-button"
+                              onClick={() => handleSelectCareer(option.career)}
+                              disabled={careerPlanLoading}
+                            >
+                              {careerPlanLoading &&
+                              selectedTargetCareer === option.career
+                                ? "Building your plan..."
+                                : "Build Plan for This Career"}
+                            </button>
+                          </div>
+                        )
+                      )}
+                    </div>
+
+                    <div className="recommendation-disclaimer">
+                      <span>ⓘ</span>
+                      <p>
+                        These scores are experimental rankings from a model trained
+                        on synthetic data. They are not verified job-market
+                        probabilities or measures of career readiness. Choose the
+                        career that matches your interests and goals.
+                      </p>
+                    </div>
+
+                    {workflowResult.career_result?.note && (
+                      <p className="panel-description">
+                        {workflowResult.career_result.note}
+                      </p>
+                    )}
+                  </>
+                )}
+
+                
+                {/* Completed career workflow */}
+                {workflowResult.workflow_stage === "completed" && (
+                  <>
+                    {(() => {
+                      const learningResult = workflowResult.learning_result || {};
+                      const learning = learningResult.learning_plan || learningResult;
+                      const interview = workflowResult.interview_result || {};
+
+                      const skillGaps = learningResult.skill_gaps || {};
+                      const roadmap = learning.roadmap || [];
+
+                      const rawQuestions = interview.questions || "";
+
+                      const questions = Array.isArray(rawQuestions)
+                        ? rawQuestions
+                        : typeof rawQuestions === "string"
+                          ? rawQuestions
+                              .split(/\n(?=Q\d+[\.\):])/)
+                              .map((q) => q.trim())
+                              .filter((q) => q && !/^INTERVIEW QUESTIONS$/i.test(q))
+                          : [];
+
+                      return (
+                        <>
+                          <div className="section-heading career-plan-heading">
+                            <div>
+                              <span className="eyebrow">CAREER PLAN GENERATED</span>
+                              <h2>Your {workflowResult.selected_career} Plan</h2>
+                              <p>
+                                Your personalized learning roadmap and interview preparation
+                                are ready.
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Career overview */}
+                          <div className="career-plan-stats">
+                            <div className="career-stat-card">
+                              <span className="career-stat-icon">◷</span>
+                              <div>
+                                <span className="career-stat-label">Learning Duration</span>
+                                <strong>{learning.total_weeks ?? 0} Weeks</strong>
+                              </div>
+                            </div>
+
+                            <div className="career-stat-card">
+                              <span className="career-stat-icon">◎</span>
+                              <div>
+                                <span className="career-stat-label">Skill Coverage</span>
+                                <strong>{learningResult.coverage_score ?? 0}%</strong>
+                              </div>
+                            </div>
+
+                            <div className="career-stat-card">
+                              <span className="career-stat-icon">✦</span>
+                              <div>
+                                <span className="career-stat-label">Skills to Improve</span>
+                                <strong>
+                                  {Object.keys(skillGaps).filter(
+                                    (skill) => Number(skillGaps[skill]?.gap || 0) > 0
+                                  ).length}
+                                </strong>
+                              </div>
+                            </div>
+
+                            <div className="career-stat-card">
+                              <span className="career-stat-icon">▤</span>
+                              <div>
+                                <span className="career-stat-label">Interview Questions</span>
+                                <strong>{interview.total_questions ?? questions.length}</strong>
+                              </div>
+                            </div>
+                          </div>
+
+                          {/* Skill gap analysis */}
+                          <div className="panel career-plan-panel">
+                            <div className="panel-heading">
+                              <div>
+                                <span className="eyebrow">YOUR DEVELOPMENT AREAS</span>
+                                <h3>Skill Gap Analysis</h3>
+                                <p className="panel-description">
+                                  Compare your current skill levels with the target
+                                  requirements for {workflowResult.selected_career}.
+                                </p>
+                              </div>
+                            </div>
+
+                            {Object.keys(skillGaps).length > 0 ? (
+                              <div className="career-skill-grid">
+                                {Object.entries(skillGaps).map(([skill, details]) => {
+                                  const current = Number(details.current_level || 0);
+                                  const required = Number(details.required_level || 0);
+                                  const gap = Number(details.gap || 0);
+
+                                  return (
+                                    <div className="career-skill-card" key={skill}>
+                                      <div className="career-skill-top">
+                                        <strong>{skill.replaceAll("_", " ")}</strong>
+                                        <span className={gap > 0 ? "skill-gap-badge" : "skill-ready-badge"}>
+                                          {gap > 0 ? `${gap} levels to improve` : "On target"}
+                                        </span>
+                                      </div>
+
+                                      <div className="career-skill-levels">
+                                        <span>Current: {current}/10</span>
+                                        <span>Target: {required}/10</span>
+                                      </div>
+
+                                      <div className="career-skill-track">
+                                        <div
+                                          className="career-skill-fill"
+                                          style={{
+                                            width: `${Math.max(0, Math.min(100, current * 10))}%`,
+                                          }}
+                                        />
+                                      </div>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            ) : (
+                              <p className="panel-description">
+                                No skill-gap details are available.
+                              </p>
+                            )}
+                          </div>
+
+                          {/* Learning roadmap */}
+                          <div className="panel career-plan-panel">
+                            <div className="panel-heading">
+                              <div>
+                                <span className="eyebrow">YOUR LEARNING JOURNEY</span>
+                                <h3>Learning Roadmap</h3>
+                                <p className="panel-description">
+                                  Follow these learning activities in sequence and complete
+                                  the practical tasks.
+                                </p>
+                              </div>
+                            </div>
+
+                            {roadmap.length > 0 ? (
+                              <div className="career-roadmap-list">
+                                {roadmap.map((item, index) => (
+                                  <div className="career-roadmap-item" key={index}>
+                                    <div className="career-roadmap-number">
+                                      {item.week ?? item.week_number ?? index + 1}
+                                    </div>
+
+                                    <div className="career-roadmap-content">
+                                      <span className="eyebrow">
+                                        WEEK {item.week ?? item.week_number ?? index + 1}
+                                      </span>
+
+                                      <h4>{(item.skill || "Learning").replaceAll("_", " ")}</h4>
+
+                                      <p>
+                                        {item.topic ||
+                                          (Array.isArray(item.topics)
+                                            ? item.topics.join(", ")
+                                            : item.topics) ||
+                                          item.task ||
+                                          "Complete the assigned learning activities."}
+                                      </p>
+
+                                      {item.task && (
+                                        <div className="career-roadmap-task">
+                                          <strong>Practical task:</strong> {item.task}
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="panel-description">
+                                {learning.message || "No roadmap activities were returned."}
+                              </p>
+                            )}
+
+                            {learning.explanation && (
+                              <div className="career-learning-advice">
+                                <h4>AI Learning Guidance</h4>
+                                <p>{learning.explanation}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Interview preparation */}
+                          <div className="panel career-plan-panel">
+                            <div className="panel-heading">
+                              <div>
+                                <span className="eyebrow">PLACEMENT PREPARATION</span>
+                                <h3>Interview Preparation</h3>
+                                <p className="panel-description">
+                                  Practice these questions for your {workflowResult.selected_career}
+                                  interview.
+                                </p>
+                              </div>
+
+                              <span className="interview-difficulty-badge">
+                                {(interview.difficulty || workflowDifficulty).toUpperCase()}
+                              </span>
+                            </div>
+
+                            {questions.length > 0 ? (
+                              <div className="career-question-list">
+                                {questions.map((question, index) => (
+                                  <div className="career-question-card" key={index}>
+                                    <span className="career-question-number">
+                                      QUESTION {index + 1}
+                                    </span>
+                                    <p>
+                                      {typeof question === "string"
+                                        ? question.replace(/^Q\d+[\.\):]\s*/, "")
+                                        : question.question || question.text || JSON.stringify(question)}
+                                    </p>
+                                  </div>
+                                ))}
+                              </div>
+                            ) : (
+                              <p className="panel-description">
+                                {typeof rawQuestions === "string" && rawQuestions
+                                  ? rawQuestions
+                                  : "No interview questions were returned."}
+                              </p>
+                            )}
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </>
+                )}
+
+
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    setWorkflowResult(null);
+                    setWorkflowError("");
+                    setSelectedTargetCareer("");
+                  }}
+                >
+                  Start Again
+                </button>
+
+              </div>
+            )}
+
+          </section>
+
 
           {/* AI Assistant */}
           <section id="assistant" className="dashboard-section">

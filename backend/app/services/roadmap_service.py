@@ -1,69 +1,112 @@
-
 SKILL_ROADMAP = {
+
     "Python": {
         "topics": [
-            "Python fundamentals and data types",
-            "Functions, loops, and data structures",
-            "NumPy and Pandas",
-            "Data analysis mini-project"
+            "Python fundamentals, data types, and control flow",
+            "Functions, OOP, error handling, and data structures",
+            "NumPy, Pandas, and data manipulation",
+            "Working with real-world datasets"
         ],
-        "project": "Build a student performance analysis project"
+        "weekly_tasks": [
+            "Solve Python programming problems using functions and data structures",
+            "Clean and analyze a dataset using Pandas and NumPy",
+            "Practice data manipulation and write reusable Python code"
+        ],
+        "project": "Build a complete exploratory data analysis project using Python"
     },
+
     "SQL": {
         "topics": [
-            "SQL fundamentals and queries",
-            "Filtering, sorting, and joins",
-            "Group By and aggregate functions",
-            "Subqueries and window functions"
+            "SQL fundamentals, SELECT, WHERE, and sorting",
+            "Joins, grouping, and aggregate functions",
+            "Subqueries, CTEs, and window functions",
+            "Query optimization and practical database analysis"
         ],
-        "project": "Build a student database analysis project"
+        "weekly_tasks": [
+            "Write SQL queries to filter and retrieve data",
+            "Solve practical problems using joins and aggregate functions",
+            "Practice complex SQL queries on a sample database"
+        ],
+        "project": "Build a database analysis project using SQL"
     },
+
     "Machine_Learning": {
         "topics": [
-            "Introduction to Machine Learning",
-            "Linear and Logistic Regression",
-            "Decision Trees, Random Forest, and SVM",
-            "Model evaluation and cross-validation",
-            "Feature engineering and model tuning",
-            "End-to-end ML project"
+            "Python for Machine Learning, NumPy, and Pandas",
+            "Statistics, probability, and linear algebra fundamentals",
+            "Supervised learning: regression and classification",
+            "Decision Trees, Random Forest, and Support Vector Machines",
+            "Unsupervised learning: K-Means and clustering",
+            "Model evaluation, cross-validation, and hyperparameter tuning",
+            "Feature engineering and model optimization",
+            "Deploying and using machine learning models through APIs"
         ],
-        "project": "Build an ML model to predict student career suitability"
+        "weekly_tasks": [
+            "Implement basic ML algorithms using scikit-learn",
+            "Train and compare classification and regression models",
+            "Evaluate models using cross-validation and appropriate metrics"
+        ],
+        "project": "Build and deploy an end-to-end machine learning project"
     },
+
     "React": {
         "topics": [
-            "React components and JSX",
-            "Props, state, and events",
-            "Hooks and API integration",
-            "Routing and reusable components"
+            "React components, JSX, and props",
+            "State, events, and React hooks",
+            "API integration and routing",
+            "Reusable components and frontend architecture"
         ],
-        "project": "Build a React career dashboard"
+        "weekly_tasks": [
+            "Build reusable React components",
+            "Create interactive pages using hooks and state",
+            "Connect a React application to backend APIs"
+        ],
+        "project": "Build a responsive React application with API integration"
     },
+
     "Node": {
         "topics": [
-            "Node.js fundamentals",
-            "Express.js and REST APIs",
-            "Middleware and authentication",
-            "API error handling and validation"
+            "Node.js fundamentals and asynchronous JavaScript",
+            "Express.js and REST API development",
+            "Middleware, authentication, and authorization",
+            "API validation, error handling, and backend architecture"
         ],
-        "project": "Build a REST API using Node.js and Express"
+        "weekly_tasks": [
+            "Build basic backend services using Node.js",
+            "Create REST APIs using Express.js",
+            "Implement authentication and API validation"
+        ],
+        "project": "Build a secure REST API using Node.js and Express"
     },
+
     "MongoDB": {
         "topics": [
-            "MongoDB fundamentals",
-            "CRUD operations",
-            "Schema design and relationships",
-            "Aggregation pipeline"
+            "MongoDB fundamentals and document structure",
+            "CRUD operations and query operators",
+            "Schema design and data relationships",
+            "Aggregation pipeline and indexing"
         ],
-        "project": "Build a student career profile database"
+        "weekly_tasks": [
+            "Practice MongoDB CRUD operations",
+            "Design collections for a practical application",
+            "Use aggregation and indexing to query data efficiently"
+        ],
+        "project": "Design and implement a MongoDB database for a full-stack application"
     },
+
     "Excel": {
         "topics": [
             "Excel formulas and functions",
             "Sorting, filtering, and data cleaning",
             "Pivot tables and charts",
-            "Dashboard creation"
+            "Dashboard creation and data visualization"
         ],
-        "project": "Build a student performance dashboard"
+        "weekly_tasks": [
+            "Practice formulas and spreadsheet functions",
+            "Clean and summarize a dataset",
+            "Create charts and an interactive dashboard"
+        ],
+        "project": "Build a data analysis dashboard using Excel"
     }
 }
 
@@ -72,20 +115,20 @@ def generate_learning_roadmap(skill_gaps):
 
     roadmap = []
 
-    # Keep only skills that need improvement
+    # Keep only skills that need improvement.
     missing_skills = []
 
     for skill, details in skill_gaps.items():
 
         gap = details["gap"]
 
-        if gap > 0:
+        if gap > 0 and skill in SKILL_ROADMAP:
             missing_skills.append({
                 "skill": skill,
                 "gap": gap
             })
 
-    # Prioritize the skills with the largest gaps
+    # Prioritize skills with the largest gaps.
     missing_skills.sort(
         key=lambda item: item["gap"],
         reverse=True
@@ -98,13 +141,12 @@ def generate_learning_roadmap(skill_gaps):
         skill = item["skill"]
         gap = item["gap"]
 
-        if skill not in SKILL_ROADMAP:
-            continue
-
         skill_data = SKILL_ROADMAP[skill]
-        topics = skill_data["topics"]
 
-        # Larger gaps receive more learning time
+        topics = skill_data["topics"]
+        weekly_tasks = skill_data["weekly_tasks"]
+
+        # Larger gaps receive more learning time.
         if gap >= 5:
             duration = 3
         elif gap >= 3:
@@ -112,7 +154,7 @@ def generate_learning_roadmap(skill_gaps):
         else:
             duration = 1
 
-        # Divide topics across the allocated weeks
+        # Divide topics across the allocated weeks.
         topics_per_week = len(topics) // duration
         extra_topics = len(topics) % duration
 
@@ -131,17 +173,21 @@ def generate_learning_roadmap(skill_gaps):
 
             topic_index += count
 
+            task = weekly_tasks[
+                min(week, len(weekly_tasks) - 1)
+            ]
+
             roadmap.append({
                 "week": current_week,
                 "skill": skill,
                 "gap": gap,
                 "topics": weekly_topics,
-                "task": f"Practice {skill} concepts covered this week"
+                "task": task
             })
 
             current_week += 1
 
-        # Add a project after completing this skill
+        # Add a practical project after completing the skill.
         roadmap.append({
             "week": current_week,
             "skill": skill,

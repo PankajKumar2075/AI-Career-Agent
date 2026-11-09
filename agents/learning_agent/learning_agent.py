@@ -32,28 +32,36 @@ def create_learning_plan(skill_gaps, target_career=None):
 
     # Step 3: Ask AI for learning priorities and final advice only
     prompt = f"""
-You are an expert AI Learning Mentor.
+You are an expert technical learning mentor.
 
-Target Career: {target_career}
+The user's chosen career is: {target_career}
 
-Skills to learn, in priority order:
+The following skills are the only skills included in this career's
+current skill-gap analysis, ordered by learning priority:
+
 {json.dumps(skills)}
 
-Generate two sections:
+Your task is to explain how to improve these skills for the selected career.
+
+Generate exactly two sections:
 
 LEARNING PRIORITIES:
-- Explain why each listed skill matters for the target career.
-- Keep each explanation short.
-- Do not introduce any additional skills.
+- Explain why each provided skill matters for {target_career}.
+- Explain the practical knowledge the learner should develop.
+- Discuss only the skills listed above.
+- Do not recommend unrelated technologies.
 
 FINAL ADVICE:
-- Give exactly 3 practical tips for completing the learning roadmap.
+- Give exactly 3 practical and actionable learning tips.
+- Make the advice relevant to {target_career}.
+- Encourage hands-on practice and project building.
 
-Rules:
-- Use only the skills provided.
-- Do not invent projects, topics, or week numbers.
-- Use simple and clear language.
-- Keep the response under 150 words.
+Strict rules:
+- The selected career is the user's choice. Do not recommend a different career.
+- Do not introduce additional skills, projects, topics, or week numbers.
+- Do not contradict the structured roadmap.
+- Use simple, clear language.
+- Keep the complete response under 150 words.
 """
 
     ai_guidance = generate_ai_response(prompt)

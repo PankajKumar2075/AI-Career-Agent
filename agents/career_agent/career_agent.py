@@ -136,3 +136,41 @@ if __name__ == "__main__":
     """
 
     recommend_career(sample_resume)
+
+
+
+def recommend_career_options(resume_text):
+    """
+    Recommend multiple career directions.
+    The ML model ranks options; it does not choose the user's career.
+    """
+
+    result = recommend_career(resume_text)
+
+    if not isinstance(result, dict):
+        raise ValueError(result)
+
+    probabilities = result.get("probabilities", {})
+
+    recommended_careers = [
+        {
+            "career": career,
+            "ranking_score": score
+        }
+        for career, score in sorted(
+            probabilities.items(),
+            key=lambda item: item[1],
+            reverse=True
+        )
+    ]
+
+    return {
+        "recommended_careers": recommended_careers,
+        "skills": result.get("skills", []),
+        "skill_scores": result.get("skill_scores", {}),
+        "note": (
+            "These are experimental model rankings based on a synthetic "
+            "training dataset. They are suggestions, not calibrated job "
+            "readiness scores or predictions of career success."
+        )
+    }

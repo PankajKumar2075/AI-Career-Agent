@@ -24,23 +24,82 @@ def generate_interview_questions(
 
     skills = skills or []
 
-    skill_text = ", ".join(skills) if skills else "General technical knowledge"
+    # Define the main interview focus for each supported career.
+    career_focus = {
+
+        "ML Engineer": """
+- Python programming for machine learning
+- NumPy and Pandas
+- Statistics and probability fundamentals
+- Supervised and unsupervised learning
+- Regression, classification, and clustering
+- Model evaluation and cross-validation
+- Feature engineering and model optimization
+- Practical machine learning scenarios
+""",
+
+        "Data Analyst": """
+- SQL queries, joins, and aggregations
+- Python for data analysis
+- Pandas and NumPy
+- Statistics and probability
+- Data cleaning and exploratory data analysis
+- Excel and data visualization
+- Analytical thinking and business scenarios
+""",
+
+        "Full Stack Developer": """
+- JavaScript and React
+- Node.js and Express.js
+- REST API development
+- MongoDB and SQL databases
+- Authentication and authorization
+- Frontend-backend integration
+- Debugging and application architecture
+"""
+    }
+
+    focus = career_focus.get(
+        target_career,
+        f"Technical concepts and practical scenarios relevant to {target_career}"
+    )
+
+    skill_text = ", ".join(skills) if skills else "No specific skills provided"
 
     prompt = f"""
-You are an experienced technical interviewer.
+You are an experienced technical interviewer conducting a placement
+interview for the selected career.
 
-Target Career: {target_career}
-Candidate Skills: {skill_text}
+USER'S CHOSEN CAREER: {target_career}
+
+Candidate's resume skills:
+{skill_text}
+
+INTERVIEW TOPICS TO PRIORITIZE:
+{focus}
+
 Difficulty: {difficulty}
 
 Generate exactly {num_questions} unique technical interview questions.
 
-Requirements:
-- Include conceptual and practical questions.
-- Include scenario-based questions where appropriate.
+Question distribution:
+- Cover the fundamental concepts of the selected career.
+- Include practical implementation questions.
+- Include scenario-based questions.
+- Include questions that test problem-solving and technical understanding.
+- Use the candidate's skills only when they are relevant to the selected career.
+
+Strict rules:
+- Every question must be relevant to {target_career}.
+- Do not generate questions for an unrelated career.
+- Do not ask React, Node.js, or MongoDB questions in an ML Engineer
+  interview unless a question genuinely requires them.
+- Do not ask questions merely because a technology appears in the resume.
 - Match the requested difficulty.
-- Do not provide answers or hints.
-- Keep questions suitable for a college placement interview.
+- Do not provide answers, hints, or explanations.
+- Make every question technically meaningful and suitable for a
+  college placement interview.
+- Do not repeat questions.
 
 Output format:
 
@@ -48,10 +107,10 @@ INTERVIEW QUESTIONS
 
 Q1. Question
 Q2. Question
-Continue until all questions are generated.
+Continue until all {num_questions} questions are generated.
 """
 
-    questions = generate_ai_response(prompt)
+    questions = generate_interview_response(prompt)
 
     return {
         "target_career": target_career,
@@ -60,7 +119,6 @@ Continue until all questions are generated.
         "skills": skills,
         "questions": questions
     }
-
 
 def evaluate_interview_answer(question, answer, target_career):
 

@@ -152,32 +152,22 @@ CAREER_REQUIREMENTS = {
 
     "ML Engineer": {
         "Python": 9,
-        "SQL": 7,
         "Machine_Learning": 9,
-        "React": 2,
-        "Node": 2,
-        "MongoDB": 3,
-        "Excel": 4
+        "SQL": 7
     },
 
     "Data Analyst": {
         "Python": 7,
         "SQL": 9,
-        "Machine_Learning": 5,
-        "React": 1,
-        "Node": 1,
-        "MongoDB": 4,
-        "Excel": 9
+        "Excel": 9,
+        "Machine_Learning": 5
     },
 
     "Full Stack Developer": {
-        "Python": 4,
-        "SQL": 6,
-        "Machine_Learning": 2,
         "React": 9,
         "Node": 9,
         "MongoDB": 8,
-        "Excel": 2
+        "SQL": 6
     }
 }
 
@@ -633,3 +623,100 @@ def run_mock_interview_api(request: MockInterviewRequest):
     )
 
     return result
+
+
+
+
+# ==============================
+# MULTI-AGENT ORCHESTRATOR API
+# ==============================
+
+class FullCareerWorkflowRequest(BaseModel):
+
+    resume_text: str = Field(min_length=50)
+
+    mode: Literal["discover", "goal"] = "discover"
+
+    target_career: Literal[
+        "ML Engineer",
+        "Data Analyst",
+        "Full Stack Developer"
+    ] | None = None
+
+    difficulty: Literal["easy", "medium", "hard"] = "medium"
+
+    num_questions: int = Field(default=5, ge=1, le=10)
+
+
+class ContinueCareerWorkflowRequest(BaseModel):
+
+    resume_text: str = Field(min_length=50)
+
+    target_career: Literal[
+        "ML Engineer",
+        "Data Analyst",
+        "Full Stack Developer"
+    ]
+
+    difficulty: Literal["easy", "medium", "hard"] = "medium"
+
+    num_questions: int = Field(default=5, ge=1, le=10)
+
+
+@app.post("/agents/full-career-workflow")
+def run_full_career_workflow_api(
+    request: FullCareerWorkflowRequest
+):
+
+    from agents.orchestrator.orchestrator import (
+        run_full_career_workflow
+    )
+
+    if request.mode == "goal" and not request.target_career:
+        raise HTTPException(
+            status_code=400,
+            detail="Please select a target career for goal mode."
+        )
+
+    try:
+        result = run_full_career_workflow(
+            resume_text=request.resume_text,
+            mode=request.mode,
+            target_career=request.target_career,
+            difficulty=request.difficulty,
+            num_questions=request.num_questions
+        )
+
+        return result
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Multi-agent workflow failed: {str(e)}"
+        )
+
+
+@app.post("/agents/continue-career-workflow")
+def continue_career_workflow_api(
+    request: ContinueCareerWorkflowRequest
+):
+
+    from agents.orchestrator.orchestrator import (
+        continue_career_workflow
+    )
+
+    try:
+        result = continue_career_workflow(
+            resume_text=request.resume_text,
+            target_career=request.target_career,
+            difficulty=request.difficulty,
+            num_questions=request.num_questions
+        )
+
+        return result
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Career workflow continuation failed: {str(e)}"
+        )
