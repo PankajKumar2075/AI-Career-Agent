@@ -88,6 +88,10 @@ const [interviewError, setInterviewError] = useState("");
 
 // Full Career Workflow states
 const [resumeText, setResumeText] = useState("");
+const [resumeFile, setResumeFile] = useState(null);
+const [resumeUploadLoading, setResumeUploadLoading] = useState(false);
+const [resumeUploadError, setResumeUploadError] = useState("");
+const [resumeFileInfo, setResumeFileInfo] = useState(null);
 const [careerMode, setCareerMode] = useState("discover");
 const [selectedTargetCareer, setSelectedTargetCareer] = useState("");
 const [workflowDifficulty, setWorkflowDifficulty] = useState("medium");
@@ -190,99 +194,99 @@ const [careerPlanLoading, setCareerPlanLoading] = useState(false);
   };
 
   
-// Generate AI-powered personalized learning plan
-const handleRoadmapSubmit = async () => {
-    setRoadmapLoading(true);
-    setRoadmapError("");
-    setRoadmapResult(null);
+  // Generate AI-powered personalized learning plan
+  const handleRoadmapSubmit = async () => {
+      setRoadmapLoading(true);
+      setRoadmapError("");
+      setRoadmapResult(null);
 
-    try {
-        const response = await fetch(
-            "http://127.0.0.1:8000/agentic-learning-plan",
-            {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                },
-                body: JSON.stringify({
-                    ...skills,
-                    target_career: targetCareer,
-                }),
-            }
-        );
+      try {
+          const response = await fetch(
+              "http://127.0.0.1:8000/agentic-learning-plan",
+              {
+                  method: "POST",
+                  headers: {
+                      "Content-Type": "application/json",
+                  },
+                  body: JSON.stringify({
+                      ...skills,
+                      target_career: targetCareer,
+                  }),
+              }
+          );
 
-        const data = await response.json();
+          const data = await response.json();
 
-        if (!response.ok) {
-            throw new Error(
-                data.detail || "AI learning plan generation failed."
-            );
-        }
+          if (!response.ok) {
+              throw new Error(
+                  data.detail || "AI learning plan generation failed."
+              );
+          }
 
-        // Combine the Learning Agent response
-        // with the existing roadmap UI structure.
-        const learningPlan = {
-            ...data.learning_plan,
-            target_career: data.target_career,
-            coverage_score: data.coverage_score,
-            skill_gaps: data.skill_gaps,
-        };
+          // Combine the Learning Agent response
+          // with the existing roadmap UI structure.
+          const learningPlan = {
+              ...data.learning_plan,
+              target_career: data.target_career,
+              coverage_score: data.coverage_score,
+              skill_gaps: data.skill_gaps,
+          };
 
-        setRoadmapResult(learningPlan);
+          setRoadmapResult(learningPlan);
 
-        await loadSavedProgress();
+          await loadSavedProgress();
 
-    } catch (err) {
-        console.error("Learning Agent Error:", err);
+      } catch (err) {
+          console.error("Learning Agent Error:", err);
 
-        setRoadmapError(
-            err.message || "Could not generate the AI learning plan."
-        );
-    } finally {
-        setRoadmapLoading(false);
-    }
-};
+          setRoadmapError(
+              err.message || "Could not generate the AI learning plan."
+          );
+      } finally {
+          setRoadmapLoading(false);
+      }
+  };
 
 
-const handleWeekToggle = (week) => {
-  setCompletedWeeks((previous) => {
-    const updated = {
-      ...previous,
-      [week]: !previous[week],
-    };
+  const handleWeekToggle = (week) => {
+    setCompletedWeeks((previous) => {
+      const updated = {
+        ...previous,
+        [week]: !previous[week],
+      };
 
-    saveProgressToDatabase(updated);
+      saveProgressToDatabase(updated);
 
-    return updated;
-  });
-};
+      return updated;
+    });
+  };
 
 
   
-const loadSavedProgress = async () => {
-  try {
-    const response = await fetch(
-      `http://127.0.0.1:8000/get-progress/${studentId}/${encodeURIComponent(targetCareer)}`
-    );
+  const loadSavedProgress = async () => {
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/get-progress/${studentId}/${encodeURIComponent(targetCareer)}`
+      );
 
-    if (!response.ok) {
-      throw new Error("Could not retrieve progress");
+      if (!response.ok) {
+        throw new Error("Could not retrieve progress");
+      }
+
+      const data = await response.json();
+
+      const savedWeeks = {};
+
+      data.completed_weeks.forEach((week) => {
+        savedWeeks[week] = true;
+      });
+
+      setCompletedWeeks(savedWeeks);
+
+    } catch (err) {
+      console.error("Progress loading error:", err);
     }
-
-    const data = await response.json();
-
-    const savedWeeks = {};
-
-    data.completed_weeks.forEach((week) => {
-      savedWeeks[week] = true;
-    });
-
-    setCompletedWeeks(savedWeeks);
-
-  } catch (err) {
-    console.error("Progress loading error:", err);
-  }
-};
+  };
 
 
 
@@ -528,6 +532,71 @@ const handleSubmitInterview = async () => {
     }
 };
 
+
+//resume upload
+const handleResumeUpload = async () => {
+    if (!resumeFile) {
+        setResumeUploadError("Please select a PDF or DOCX resume.");
+        return;
+    }
+
+    const allowedExtensions = [".pdf", ".docx"];
+    const fileName = resumeFile.name.toLowerCase();
+
+    if (!allowedExtensions.some((ext) => fileName.endsWith(ext))) {
+        setResumeUploadError("Only PDF and DOCX files are supported.");
+        return;
+    }
+
+    if (resumeFile.size > 10 * 1024 * 1024) {
+        setResumeUploadError("File size must not exceed 10 MB.");
+        return;
+    }
+
+    try {
+        setResumeUploadLoading(true);
+        setResumeUploadError("");
+        setResumeFileInfo(null);
+
+        const formData = new FormData();
+        formData.append("file", resumeFile);
+
+        const response = await fetch(
+            "http://127.0.0.1:8000/upload-resume",
+            {
+                method: "POST",
+                body: formData
+            }
+        );
+
+        const data = await response.json();
+
+        if (!response.ok) {
+            throw new Error(data.detail || "Resume upload failed.");
+        }
+
+        // Put extracted resume text into the existing text area.
+        setResumeText(data.extracted_text);
+
+        // Store file information for displaying upload status.
+        setResumeFileInfo({
+            filename: data.filename,
+            fileType: data.file_type,
+            totalWords: data.total_words,
+            totalPages: data.total_pages
+        });
+
+        setResumeUploadError("");
+
+    } catch (error) {
+        setResumeUploadError(
+            error.message || "Unable to upload resume."
+        );
+
+    } finally {
+        setResumeUploadLoading(false);
+    }
+};
 
 // Run the initial career workflow
 const handleFullCareerWorkflow = async () => {
@@ -1432,6 +1501,62 @@ const handleSelectCareer = async (career) => {
               {/* Resume input */}
               <div className="analysis-form workflow-input-area">
                 <label htmlFor="workflow-resume">Your resume</label>
+                <div className="resume-upload-section">
+                <div className="resume-upload-heading">
+                    <h4>Upload your resume</h4>
+                    <span>PDF or DOCX · Maximum 10 MB</span>
+                </div>
+
+                <div className="resume-upload-controls">
+                    <input
+                        type="file"
+                        id="resume-file"
+                        accept=".pdf,.docx"
+                        onChange={(e) => {
+                            setResumeFile(e.target.files[0] || null);
+                            setResumeUploadError("");
+                            setResumeFileInfo(null);
+                        }}
+                    />
+
+                    <button
+                        type="button"
+                        onClick={handleResumeUpload}
+                        disabled={!resumeFile || resumeUploadLoading}
+                    >
+                        {resumeUploadLoading ? "Extracting..." : "Upload & Extract"}
+                    </button>
+                </div>
+
+                {resumeFile && (
+                    <p className="resume-selected-file">
+                        Selected: {resumeFile.name}
+                    </p>
+                )}
+
+                {resumeUploadError && (
+                    <p className="resume-upload-error">
+                        {resumeUploadError}
+                    </p>
+                )}
+
+                {resumeFileInfo && (
+                    <div className="resume-upload-success">
+                        <p>✓ Resume uploaded and extracted successfully!</p>
+                        <span>
+                            {resumeFileInfo.totalWords} words extracted
+                            {resumeFileInfo.totalPages
+                                ? ` · ${resumeFileInfo.totalPages} pages`
+                                : ""}
+                        </span>
+                    </div>
+                )}
+
+                <div className="resume-upload-divider">
+                    <span>OR PASTE YOUR RESUME</span>
+                </div>
+            </div>
+
 
                 <textarea
                   id="workflow-resume"

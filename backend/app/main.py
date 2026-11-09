@@ -4,7 +4,7 @@ from pathlib import Path
 import joblib
 import pandas as pd
 
-from fastapi import FastAPI
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from pydantic import BaseModel, Field
 from fastapi.middleware.cors import CORSMiddleware
 from typing import Literal
@@ -17,9 +17,8 @@ from generative_ai.ollama_service import (
     generate_ai_response,
     generate_chat_response
 )
-from fastapi import HTTPException
 from generative_ai.rag.rag_pipeline import generate_rag_result
-
+from backend.app.services.resume_parser import parse_resume_file
 
 
 
@@ -194,6 +193,36 @@ def health():
     }
 
 
+@app.post("/upload-resume")
+async def upload_resume(file: UploadFile = File(...)):
+    try:
+        # Read at most 10 MB + 1 byte to enforce the file-size limit.
+        contents = await file.read(10 * 1024 * 1024 + 1)
+
+        # Extract and validate resume content.
+        result = parse_resume_file(file.filename, contents)
+
+        return {
+            "message": "Resume uploaded and text extracted successfully.",
+            **result
+        }
+
+    except ValueError as error:
+        raise HTTPException(
+            status_code=400,
+            detail=str(error)
+        )
+
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Unable to process the uploaded resume."
+        )
+
+    finally:
+        await file.close()
+
+        
 # 6. Career prediction endpoint
 
 

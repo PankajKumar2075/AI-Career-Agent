@@ -6,13 +6,14 @@ The platform analyzes resumes, recommends suitable career paths, identifies skil
 
 ## Main Modules
 
-1. Resume Analysis
+1. Resume Analysis and Document Upload
 2. Career Recommendation
 3. Skill Gap Analysis
 4. Personalized Learning Roadmap
 5. AI Mock Interview
 6. Interview Performance Evaluation
 7. Performance Tracking
+8. Multi-Agent Career Workflow Orchestration
 
 ## Technology Stack
 
@@ -24,6 +25,7 @@ The platform analyzes resumes, recommends suitable career paths, identifies skil
 - **Vector Database:** ChromaDB
 - **Database:** MongoDB Atlas
 - **Model Storage:** Joblib
+- **Resume Processing:** PyMuPDF, python-docx, python-multipart
 - **Version Control:** Git and GitHub
 
 ## Project Status
@@ -62,6 +64,12 @@ The platform analyzes resumes, recommends suitable career paths, identifies skil
 - [x] Adaptive follow-up question API
 - [x] Complete mock interview API
 - [x] Interview performance summary generation
+- [x] Resume upload and document processing API
+- [x] PDF text extraction using PyMuPDF
+- [x] DOCX text extraction using python-docx
+- [x] Resume file validation and error handling
+- [x] Full multi-agent career workflow API
+- [x] Career workflow continuation API
 
 ### Phase 4: Frontend Development
 
@@ -80,6 +88,10 @@ The platform analyzes resumes, recommends suitable career paths, identifies skil
 - [x] AI evaluation and feedback display
 - [x] Adaptive follow-up question display
 - [x] Overall interview performance report
+- [x] Resume upload interface
+- [x] Automatic extraction of uploaded resume text
+- [x] Extracted resume preview and manual editing
+- [x] Full Career Workflow frontend integration
 
 ### Phase 5: Generative AI and RAG
 
@@ -122,9 +134,14 @@ The platform analyzes resumes, recommends suitable career paths, identifies skil
 - [x] Career-specific skill gap analysis
 - [x] Career-specific learning roadmap generation
 - [x] Full Career Workflow frontend integration
+- [x] PDF and DOCX resume upload integration
+- [x] Automatic resume text extraction and frontend integration
 
 ### Phase 7: Testing and Deployment
 
+- [x] PDF resume upload testing
+- [x] DOCX resume upload testing
+- [x] Unsupported file format validation testing
 - [ ] End-to-end testing
 - [ ] Complete multi-agent workflow testing
 - [ ] Frontend and backend deployment
@@ -134,21 +151,23 @@ The platform analyzes resumes, recommends suitable career paths, identifies skil
 
 The project currently includes four developed agents:
 
-1. **Resume Agent:** Extracts skills, projects, and resume statistics using resume analysis tools.
+1. **Resume Agent:** Extracts skills, projects, and resume statistics using resume analysis tools. It receives extracted resume content from the document-processing module.
 2. **Career Agent:** Uses the trained Machine Learning model to recommend a career based on extracted resume skills.
 3. **Learning Agent:** Generates personalized learning roadmaps using skill gap analysis and provides AI-powered learning guidance.
 4. **Interview Agent:** Generates career-specific interview questions, evaluates candidate answers, generates adaptive follow-up questions, and provides performance reports.
 
-**Upcoming Development:**
-
-Complete multi-agent orchestration to connect all four agents into a unified career preparation workflow.
+The four agents are connected through a central orchestrator that coordinates the complete career preparation workflow.
 
 ## Current Agent Workflows
 
 - **Resume + Career Workflow:** Connects resume analysis with ML-based career recommendation.
 - **Learning Workflow:** Connects skill gap analysis with structured roadmap generation and AI learning guidance.
 - **Interview Workflow:** Generates mock interviews, evaluates candidate answers, provides adaptive follow-up questions, and calculates overall interview performance.
-- **Frontend Integration:** Provides interactive interfaces for learning plans, progress tracking, and AI-powered mock interviews.
+- **Complete Career Workflow:** Coordinates Resume, Career, Learning, and Interview Agents to provide an integrated career preparation experience.
+- **Career Discovery Mode:** Analyzes a resume and recommends suitable career options.
+- **Career Goal Mode:** Allows users to select a target career and receive career-specific skill gap analysis, learning roadmaps, and interview preparation.
+- **Resume Upload Workflow:** Accepts PDF and DOCX files, extracts their text, and places the extracted content in the editable resume input area.
+- **Frontend Integration:** Provides interactive interfaces for resume upload, career workflows, learning plans, progress tracking, and AI-powered mock interviews.
 
 ## Current Backend APIs
 
@@ -168,6 +187,9 @@ Complete multi-agent orchestration to connect all four agents into a unified car
 | `/interview/evaluate` | Evaluates an interview answer |
 | `/interview/follow-up` | Generates adaptive follow-up questions |
 | `/interview/mock` | Runs a complete mock interview and generates a performance report |
+| `/upload-resume` | Uploads PDF/DOCX resumes and extracts text |
+| `/agents/full-career-workflow` | Executes the complete multi-agent career workflow |
+| `/agents/continue-career-workflow` | Continues the workflow using a selected career goal |
 
 ## Important Project Notes
 
@@ -177,15 +199,19 @@ Complete multi-agent orchestration to connect all four agents into a unified car
 - The learning roadmap uses rule-based scheduling, with an LLM providing additional learning guidance.
 - Interview evaluation scores are AI-generated assessments and should be treated as indicative feedback rather than objective measurements.
 - The local Qwen 2.5 3B model is used for AI-powered features through Ollama.
+- Resume uploads currently support text-based PDF and DOCX files, with a maximum file size of 10 MB.
+- Scanned or image-based PDFs requiring OCR are not currently supported.
+- Uploaded resume content is processed for text extraction and is not intentionally stored as a permanent uploaded file by the resume upload endpoint.
 
 ## Future Enhancements
 
-- Build complete multi-agent orchestration connecting all four agents.
-- Integrate LangGraph for advanced agent workflows.
-- Add resume upload and document processing through the frontend.
+- Integrate LangGraph for advanced agent workflows and state management.
 - Improve career recommendations using real-world datasets.
+- Add OCR support for scanned and image-based resumes.
+- Improve resume parsing to identify structured information such as education, experience, skills, and projects more accurately.
 - Add advanced interview performance analytics.
 - Introduce persistent interview history and progress tracking.
+- Add more comprehensive automated testing.
 - Deploy the complete application.
 
 ## Project Repository
@@ -196,4 +222,4 @@ GitHub: [AI Career Agent](https://github.com/PankajKumar2075/AI-Career-Agent)
 
 **Project Status:** Phase 6 – Agentic AI Development (In Progress)
 
-**Completed:** Resume Agent, Career Agent, Learning Agent, and Interview Agent with frontend and backend integration.
+**Completed:** Machine Learning career prediction, RAG integration, four AI agents, complete multi-agent career workflow orchestration, resume PDF/DOCX upload and extraction, and frontend/backend integration.

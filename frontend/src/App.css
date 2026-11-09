@@ -2011,3 +2011,111 @@ textarea::placeholder {
     padding: 17px;
   }
 }
+
+
+/* Resume Upload Section */
+
+.resume-upload-section {
+    margin: 18px 0 22px;
+    padding: 18px;
+    border: 1px dashed var(--border-color, #64748b);
+    border-radius: 12px;
+    background: var(--card-background, rgba(128, 128, 128, 0.05));
+}
+
+.resume-upload-heading {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+
+.resume-upload-heading h4 {
+    margin: 0;
+    font-size: 15px;
+}
+
+.resume-upload-heading span {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.resume-upload-controls {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+
+.resume-upload-controls input {
+    flex: 1;
+    min-width: 200px;
+    max-width: 100%;
+}
+
+.resume-upload-controls button {
+    padding: 10px 18px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    background: var(--primary-color, #2563eb);
+    color: white;
+}
+
+.resume-upload-controls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.resume-selected-file {
+    margin: 12px 0 0;
+    font-size: 13px;
+    opacity: 0.8;
+    overflow-wrap: anywhere;
+}
+
+.resume-upload-error {
+    color: #dc2626;
+    font-size: 13px;
+    margin: 12px 0 0;
+}
+
+.resume-upload-success {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(34, 197, 94, 0.1);
+}
+
+.resume-upload-success p {
+    margin: 0 0 5px;
+    color: #16a34a;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.resume-upload-success span {
+    font-size: 12px;
+    opacity: 0.8;
+}
+
+.resume-upload-divider {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+    font-size: 11px;
+    letter-spacing: 1px;
+    opacity: 0.6;
+}
+
+.resume-upload-divider::before,
+.resume-upload-divider::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: currentColor;
+}
