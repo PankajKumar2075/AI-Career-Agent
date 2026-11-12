@@ -112,6 +112,18 @@ The platform analyzes resumes, recommends suitable career paths, identifies skil
 - [x] Resume Agent development
 - [x] Resume analysis tools
 - [x] LLM-based tool selection
+- [x] Structured resume information extraction
+- [x] Contact information extraction
+- [x] Education and academic score extraction
+- [x] Technical skill and proficiency extraction
+- [x] Project name, description, and technology extraction
+- [x] Work experience and internship extraction
+- [x] Certification extraction
+- [x] Achievement and award extraction
+- [x] Resume statistics calculation
+- [x] Deterministic factual resume report generation
+- [x] Separate AI-generated resume improvement suggestions
+- [x] Grounded suggestions designed to avoid fabricated achievements and metrics
 - [x] Career Agent development
 - [x] ML model integration with Career Agent
 - [x] Learning Agent development
@@ -142,7 +154,14 @@ The platform analyzes resumes, recommends suitable career paths, identifies skil
 - [x] PDF resume upload testing
 - [x] DOCX resume upload testing
 - [x] Unsupported file format validation testing
-- [ ] End-to-end testing
+- [x] Resume Agent basic extraction and report generation testing
+- [x] Resume Agent improvement suggestion testing
+- [x] Career discovery workflow testing
+- [x] Career goal selection workflow testing
+- [x] Learning roadmap workflow testing
+- [x] Interview question generation workflow testing
+- [ ] Real-world resume structured extraction validation
+- [ ] Complete end-to-end testing
 - [ ] Complete multi-agent workflow testing
 - [ ] Frontend and backend deployment
 - [ ] Final documentation
@@ -151,9 +170,12 @@ The platform analyzes resumes, recommends suitable career paths, identifies skil
 
 The project currently includes four developed agents:
 
-1. **Resume Agent:** Extracts skills, projects, and resume statistics using resume analysis tools. It receives extracted resume content from the document-processing module.
-2. **Career Agent:** Uses the trained Machine Learning model to recommend a career based on extracted resume skills.
+1. **Resume Agent:** Extracts structured information from resumes, including contact details, education, technical skills, proficiency levels, projects, work experience, certifications, achievements, and resume statistics. Generates a factual resume report and separate improvement suggestions.
+
+2. **Career Agent:** Uses the trained Machine Learning model to recommend suitable careers based on extracted resume skills.
+
 3. **Learning Agent:** Generates personalized learning roadmaps using skill gap analysis and provides AI-powered learning guidance.
+
 4. **Interview Agent:** Generates career-specific interview questions, evaluates candidate answers, generates adaptive follow-up questions, and provides performance reports.
 
 The four agents are connected through a central orchestrator that coordinates the complete career preparation workflow.
@@ -167,6 +189,7 @@ The four agents are connected through a central orchestrator that coordinates th
 - **Career Discovery Mode:** Analyzes a resume and recommends suitable career options.
 - **Career Goal Mode:** Allows users to select a target career and receive career-specific skill gap analysis, learning roadmaps, and interview preparation.
 - **Resume Upload Workflow:** Accepts PDF and DOCX files, extracts their text, and places the extracted content in the editable resume input area.
+- **Structured Resume Analysis:** Identifies important resume sections and generates a factual report separately from AI improvement suggestions.
 - **Frontend Integration:** Provides interactive interfaces for resume upload, career workflows, learning plans, progress tracking, and AI-powered mock interviews.
 
 ## Current Backend APIs
@@ -196,6 +219,9 @@ The four agents are connected through a central orchestrator that coordinates th
 - The initial career recommendation model uses a synthetic dataset. Its predictions are experimental and are not validated real-world career suitability probabilities.
 - Career skill requirements are illustrative benchmarks.
 - Resume-based skill scores currently use skill presence as a proxy, not verified proficiency.
+- The Resume Agent extracts explicitly stated proficiency levels; unspecified levels are not automatically classified as beginner.
+- Resume facts are presented separately from AI-generated improvement suggestions.
+- AI improvement suggestions are intended to avoid inventing qualifications, achievements, project features, or numerical results.
 - The learning roadmap uses rule-based scheduling, with an LLM providing additional learning guidance.
 - Interview evaluation scores are AI-generated assessments and should be treated as indicative feedback rather than objective measurements.
 - The local Qwen 2.5 3B model is used for AI-powered features through Ollama.
@@ -208,7 +234,8 @@ The four agents are connected through a central orchestrator that coordinates th
 - Integrate LangGraph for advanced agent workflows and state management.
 - Improve career recommendations using real-world datasets.
 - Add OCR support for scanned and image-based resumes.
-- Improve resume parsing to identify structured information such as education, experience, skills, and projects more accurately.
+- Improve resume parsing accuracy for complex resume layouts and tables.
+- Validate structured resume extraction using diverse real-world resumes.
 - Add advanced interview performance analytics.
 - Introduce persistent interview history and progress tracking.
 - Add more comprehensive automated testing.
@@ -222,4 +249,4 @@ GitHub: [AI Career Agent](https://github.com/PankajKumar2075/AI-Career-Agent)
 
 **Project Status:** Phase 6 – Agentic AI Development (In Progress)
 
-**Completed:** Machine Learning career prediction, RAG integration, four AI agents, complete multi-agent career workflow orchestration, resume PDF/DOCX upload and extraction, and frontend/backend integration.
+**Completed:** Machine Learning career prediction, RAG integration, four AI agents, complete multi-agent career workflow orchestration, resume PDF/DOCX upload and extraction, structured resume analysis implementation, and frontend/backend integration.
